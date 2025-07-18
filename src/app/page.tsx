@@ -1,5 +1,7 @@
-import { DashboardFeature } from '@/components/dashboard/dashboard-feature'
+'use client'
+
+import { WalletButton } from '@/components/solana/solana-provider'
 
 export default function Home() {
-  return <DashboardFeature />
+  return <WalletButton size="sm" />
 }

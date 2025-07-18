@@ -3,7 +3,8 @@
 This is a Next.js app containing:
 
 - Tailwind CSS setup for styling
-- Useful wallet UI elements setup using [Gill](https://gill.site/)
+- Wallet UI integration with Solana wallet connection
+- Clean, minimal setup focused on wallet functionality
 
 ## Getting Started
 
@@ -26,3 +27,9 @@ pnpm install
 ```shell
 pnpm dev
 ```
+
+## Features
+
+- **Wallet Connection**: Simple wallet button for connecting to Solana wallets
+- **Theme Support**: Dark/light mode support with next-themes
+- **Clean Architecture**: Minimal setup with only essential components
