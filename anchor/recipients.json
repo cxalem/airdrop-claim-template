@@ -1,0 +1,40 @@
+{
+  "airdropId": "solana-distributor-airdrop-2025",
+  "description": "Deployment setup airdrop for testing purposes",
+  "merkleRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "totalAmount": "300000000",
+  "network": "devnet",
+  "programId": "WILL_BE_UPDATED_AFTER_DEPLOYMENT",
+  "recipients": [
+    {
+      "publicKey": "11111111111111111111111111111111",
+      "amount": "75000000",
+      "index": 0,
+      "description": "Placeholder wallet 1 - Will be replaced during setup"
+    },
+    {
+      "publicKey": "11111111111111111111111111111112",
+      "amount": "75000000",
+      "index": 1,
+      "description": "Placeholder wallet 2 - Will be replaced during setup"
+    },
+    {
+      "publicKey": "11111111111111111111111111111113",
+      "amount": "75000000",
+      "index": 2,
+      "description": "Placeholder wallet 3 - Will be replaced during setup"
+    },
+    {
+      "publicKey": "11111111111111111111111111111114",
+      "amount": "75000000",
+      "index": 3,
+      "description": "Placeholder wallet 4 - Will be replaced during setup"
+    }
+  ],
+  "metadata": {
+    "createdAt": "2025-01-01T00:00:00Z",
+    "version": "1.0.0",
+    "algorithm": "keccak256",
+    "leafFormat": "recipient_pubkey(32) + amount(8) + is_claimed(1)"
+  }
+}
