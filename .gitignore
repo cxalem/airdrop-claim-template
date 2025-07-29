@@ -39,3 +39,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn
+
+# Keypairs - keep these private
+*-keypair.json
+*.json.bak
+
+# Test wallets - keep these private
+test-wallet-*.json
+test-wallets.json
+

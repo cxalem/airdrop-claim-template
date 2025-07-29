@@ -1,242 +1,333 @@
 # Solana Airdrop Claim Template
 
-A Next.js template for claiming Solana airdrops using Merkle tree-based distribution. This template provides a complete frontend interface for users to claim their allocated tokens from a Solana program.
+A complete Next.js template for creating and claiming Solana airdrops using Merkle tree-based distribution. This template includes both the Solana program deployment tools and a beautiful frontend interface for users to claim their allocated tokens.
 
 ## 🚀 Features
 
-- **Automatic Claim Status Check**: Verifies if airdrop has already been claimed before attempting to claim
-- **Merkle Tree Verification**: Uses cryptographic proofs to verify eligibility
-- **Real-time UI Feedback**: Shows detailed status messages during the claiming process
-- **Solana Integration**: Built with modern Solana libraries (`gill`, `@wallet-ui/react`)
-- **TypeScript Support**: Fully typed for better development experience
-- **Responsive UI**: Built with Tailwind CSS and modern UI components
+- **Complete Deployment Setup**: Automated script to deploy and configure your Solana airdrop program
+- **Test Wallet Generation**: Creates funded test wallets for development and testing
+- **Automatic Configuration**: Updates all config files, environment variables, and frontend code
+- **Merkle Tree Verification**: Uses cryptographic proofs to verify eligibility  
+- **Real-time UI Feedback**: Shows detailed status during the claiming process
+- **Modern Stack**: Built with Next.js, TypeScript, Tailwind CSS, and latest Solana libraries
+- **Developer Friendly**: Comprehensive error handling and detailed logging
 
 ## 📋 Prerequisites
 
-- Node.js 18+ and pnpm
-- A Solana wallet with some SOL for transaction fees (minimum 0.005 SOL)
-- Access to a deployed Solana airdrop program
-- Your wallet's private key (for claiming)
+- **Node.js 18+** and **pnpm** (or npm/yarn)
+- **Solana CLI tools** installed and configured
+- **Anchor Framework** (version 0.31.1+)
+- **Rust** (for compiling Solana programs)
+- Access to **Solana Devnet** (with SOL for deployment costs)
 
-## 🛠️ Setup
+### Installing Prerequisites
 
-1. **Clone and install dependencies:**
 ```bash
-git clone <your-repo>
+# Install Solana CLI
+sh -c "$(curl -sSfL https://release.solana.com/v1.18.4/install)"
+
+# Install Anchor
+npm install -g @coral-xyz/anchor-cli
+
+# Verify installations
+solana --version
+anchor --version
+```
+
+## 🛠️ Complete Setup Guide
+
+Follow these steps exactly to go from zero to a fully working airdrop system:
+
+### Step 1: Clone and Install
+
+```bash
+git clone https://github.com/cxalem/airdrop-claim-template.git
 cd airdrop-claim-template
 pnpm install
 ```
 
-2. **Configure environment variables:**
-Create a `.env.local` file:
-```bash
-# Required: Your wallet's private key (Base58 encoded)
-NEXT_PUBLIC_USER_PRIVATE_KEY=your_private_key_here
+**Common Issues:**
+- `pnpm not found`: Install pnpm with `npm install -g pnpm`
+- `Permission denied`: Run with `sudo` or fix npm permissions
 
-# Optional: Solana network (defaults to devnet)
+### Step 2: Add Your Private Key
+
+Create a `.env.local` file in the project root:
+
+```bash
+# Your wallet's private key (Base58 encoded) - this will be one of the airdrop recipients
+NEXT_PUBLIC_USER_PRIVATE_KEY=your_base58_private_key_here
+
+# Optional: Network (defaults to devnet)
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
-
-# Optional: Airdrop program ID (defaults to example program)
-NEXT_PUBLIC_PROGRAM_ID=1111111111111111111111111111111111111
 ```
 
-3. **Update recipient data:**
-Edit `src/lib/recipients.ts` to include your actual airdrop recipients and amounts.
-
-4. **Start the development server:**
+**How to get your private key:**
 ```bash
-pnpm dev
+# If you have a Solana keypair file:
+solana-keygen pubkey ~/.config/solana/id.json  # Shows public key
+cat ~/.config/solana/id.json  # Shows the keypair array
+
+# Convert keypair array to base58 (if needed):
+# Use online tools or Solana CLI to convert
 ```
 
-## 🔄 How It Works
+**⚠️ Security Warning:** Never commit private keys to version control! The `.env.local` file is gitignored for your safety.
 
-### Step-by-Step Process
+### Step 3: Run the Deploy Setup Script
 
-1. **User clicks "Claim Airdrop"**
-   - The UI shows "Initializing..." status
+This is the magic command that sets everything up:
 
-2. **Configuration Validation**
-   - Checks that required environment variables are set
-   - Validates private key and program ID
-
-3. **Claim Status Check**
-   - Shows "Checking if airdrop has already been claimed..." 
-   - Queries the blockchain for the user's claim account (PDA)
-   - If already claimed, shows "Already claimed" and stops
-
-4. **Eligibility Verification**
-   - Checks if the wallet address is in the recipients list
-   - Verifies the wallet has enough SOL for transaction fees (0.005 SOL minimum)
-
-5. **Merkle Proof Generation**
-   - Generates a cryptographic proof that the user is eligible
-   - Creates the Merkle tree from all recipients
-   - Extracts the specific proof path for this user
-
-6. **Transaction Execution**
-   - Shows "Claiming airdrop..." status
-   - Creates and sends the claim transaction to the Solana program
-   - Waits for confirmation
-
-7. **Success Confirmation**
-   - Shows "Success!" status
-   - Displays the claimed amount and transaction signature
-
-### Technical Architecture
-
-```ascii
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Frontend UI   │───▶│  AirdropClient   │───▶│ Solana Program  │
-│  (ClaimButton)  │    │                  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Status UI     │    │  Merkle Tree     │    │   Claim PDA     │
-│   (Messages)    │    │   Generator      │    │   (On-chain)    │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
+```bash
+cd anchor
+npx ts-node scripts/deploy-setup.ts
 ```
+
+**What this script does:**
+1. **Creates/loads deployment wallet** - Generates or imports a wallet for deploying the program
+2. **Requests SOL from faucet** - Automatically funds wallets on devnet  
+3. **Generates test wallets** - Creates additional test wallets (your private key becomes one of the recipients)
+4. **Builds configuration files** - Updates `recipients.json`, `Anchor.toml`, etc.
+5. **Generates Merkle tree** - Computes cryptographic proofs for all recipients
+6. **Updates frontend code** - Automatically updates `src/lib/recipients.ts` with real data
+7. **Deploys Solana program** - Compiles and deploys your airdrop program to devnet
+8. **Updates environment file** - Automatically adds the program ID to `.env.local`
+9. **Initializes airdrop** - Sets up the on-chain airdrop state with Merkle root
+
+**Interactive Prompts:**
+- Choose to use existing wallets or create new ones
+- Decide how many test wallets to create (default: 3)
+- Choose whether to deploy with a new program ID
+- Confirm deployment and initialization
+
+**Common Errors & Solutions:**
+
+**Error: `ANCHOR_PROVIDER_URL is not defined`**
+```bash
+# The script handles this automatically now, but if you run commands manually:
+export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
+export ANCHOR_WALLET=./deploy-wallet.json
+```
+
+**Error: `Transaction simulation failed`**
+- **Cause:** Program not deployed or not initialized
+- **Solution:** Make sure you completed the full deploy-setup process
+
+**Error: `Insufficient SOL balance`**
+- **Cause:** Deploy wallet needs more SOL for deployment costs
+- **Solution:** 
+  ```bash
+  # Check balance
+  solana balance <your-deploy-wallet-address> --url devnet
+  
+  # Request more SOL
+  solana airdrop 2 <your-deploy-wallet-address> --url devnet
+  ```
+
+**Error: `Program ID mismatch`**
+- **Cause:** Frontend using wrong program ID
+- **Solution:** The script now fixes this automatically, but verify `.env.local` has the right `NEXT_PUBLIC_PROGRAM_ID`
+
+**Error: `Airdrop rate limit exceeded`**
+- **Cause:** Too many faucet requests
+- **Solution:** Wait a few minutes and try again, or fund wallets manually
+
+### Step 4: Verify Setup Success
+
+After the script completes, you should see:
+
+```
+🎉 Everything is ready! You can now:
+   - Test claiming: npx ts-node scripts/claim-airdrop.ts <pubkey> <secretkey>
+   - Use the frontend to claim airdrops (restart dev server to pick up new env vars)
+
+📁 Files created/updated:
+   - deploy-wallet.json
+   - test-wallets.json  
+   - recipients.json (updated)
+   - src/lib/recipients.ts (updated)
+   - Anchor.toml (updated)
+   - .env.local or .env (updated with program ID)
+```
+
+**Verify your setup:**
+```bash
+# Check your program ID was added
+cat ../.env.local
+
+# Verify recipients include your wallet
+cat recipients.json
+
+# Check deployed program exists
+solana program show <your-program-id> --url devnet
+```
+
+### Step 5: Start the Frontend
+
+```bash
+cd ..  # Back to project root
+pnpm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) - you should see the airdrop claiming interface.
+
+**Common Issues:**
+- **Blank page**: Check browser console for errors
+- **"Program ID not found"**: Restart dev server to pick up new environment variables
+- **TypeScript errors**: Run `pnpm build` to check for issues
+
+### Step 6: Claim Your Airdrop
+
+1. **Open the app** - Go to http://localhost:3000
+2. **Click "Claim Airdrop"** - The button should be enabled
+3. **Watch the process** - You'll see status updates:
+   - "Initializing..."
+   - "Checking if airdrop has already been claimed..."
+   - "Claiming airdrop..."
+   - "Success!" (with transaction signature)
+
+**The claiming process:**
+1. **Validates configuration** - Checks private key and program ID
+2. **Checks claim status** - Verifies you haven't already claimed
+3. **Validates eligibility** - Confirms you're in the recipients list
+4. **Checks SOL balance** - Ensures you have enough for transaction fees
+5. **Generates Merkle proof** - Creates cryptographic proof of eligibility
+6. **Sends transaction** - Submits claim to the Solana program
+7. **Confirms success** - Displays amount claimed and transaction link
+
+**Common Claiming Errors:**
+
+**Error: `Address not eligible for this airdrop`**
+- **Cause:** Your private key doesn't match any recipient address
+- **Solution:** Make sure the private key in `.env.local` corresponds to one of the recipients in your setup
+
+**Error: `Insufficient SOL balance`** 
+- **Cause:** Your wallet needs SOL for transaction fees (minimum 0.005 SOL)
+- **Solution:**
+  ```bash
+  solana airdrop 1 <your-public-key> --url devnet
+  ```
+
+**Error: `Airdrop has already been claimed`**
+- **Cause:** You (or someone with this private key) already claimed
+- **Solution:** This is working as intended! Each address can only claim once
+
+**Error: `Transaction simulation failed`**
+- **Cause:** Usually a program or initialization issue
+- **Solution:** 
+  ```bash
+  # Re-run initialization if needed
+  cd anchor
+  ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=./deploy-wallet.json npx ts-node scripts/initialize-airdrop.ts
+  ```
+
+## 🧪 Testing with Command Line
+
+You can also test claiming via command line:
+
+```bash
+# From the anchor directory
+cd anchor
+
+# Extract private keys from test wallets
+npx ts-node scripts/extract-private-keys.ts
+
+# Claim for a specific recipient
+npx ts-node scripts/claim-airdrop.ts <public-key> <base58-private-key>
+```
+
+## 🔄 Development Workflow
+
+### For Initial Development (Mock Data)
+- The template comes with mock data that allows frontend development
+- You can work on UI/UX before deploying any Solana programs
+- Mock program ID: `MockProgramId1111111111111111111111111111111`
+
+### For Real Deployment
+- Run the deploy-setup script to replace mock data with real deployment
+- All configuration files are automatically updated
+- Environment variables are set automatically
+
+### Making Changes
+- **Add more recipients**: Edit the test wallet creation in `deploy-setup.ts`
+- **Change airdrop amounts**: Modify the amount in the recipients generation
+- **Update UI**: Customize components in `src/components/`
+- **Deploy to mainnet**: Change network settings (⚠️ be very careful!)
 
 ## 📁 Project Structure
 
 ```ascii
-src/
-├── app/
-│   ├── page.tsx                 # Main page with ClaimButton
-│   ├── layout.tsx               # App layout with providers
-│   └── globals.css              # Global styles
-├── components/
-│   ├── claim-button.tsx         # Main claim interface
-│   ├── app-providers.tsx        # React Query & theme providers
-│   └── solana/
-│       └── solana-provider.tsx  # Solana wallet connection
-├── lib/
-│   ├── airdrop-client.ts        # Core claiming logic
-│   ├── airdrop-instructions.ts  # Solana instruction serialization
-│   ├── config.ts                # Configuration management
-│   ├── merkle-tree.ts           # Merkle tree generation & proofs
-│   ├── recipients.ts            # Airdrop recipient data
-│   ├── idl.json                 # Solana program interface
-│   └── utils.ts                 # Utility functions
-└── types.ts                     # TypeScript definitions
+├── anchor/                        # Solana program and deployment scripts
+│   ├── programs/solana-distributor/ # The airdrop Solana program
+│   ├── scripts/                   # Deployment and management scripts
+│   │   ├── deploy-setup.ts        # 🌟 Main setup script
+│   │   ├── initialize-airdrop.ts  # Initialize on-chain airdrop state
+│   │   ├── claim-airdrop.ts       # Command-line claiming tool
+│   │   └── generate-merkle-tree.ts # Merkle tree utilities
+│   ├── recipients.json            # Generated recipient data
+│   └── test-wallets.json          # Generated test wallet info
+├── src/
+│   ├── app/                       # Next.js app router
+│   ├── components/
+│   │   └── claim-button.tsx       # Main claiming interface
+│   └── lib/
+│       ├── airdrop-client.ts      # Core claiming logic
+│       ├── recipients.ts          # 🔄 Auto-updated recipient data
+│       ├── config.ts              # Configuration management
+│       └── merkle-tree.ts         # Merkle tree & proof generation
+└── .env.local                     # 🔄 Auto-updated environment config
 ```
 
-### Key Files Explained
+## 🐛 Troubleshooting Common Issues
 
-#### `src/lib/airdrop-client.ts`
-The core client that handles:
-- Checking if airdrop has been claimed (`checkClaimStatus()`)
-- Claiming the airdrop (`claimAirdrop()`)
-- Validating user eligibility and balance
-- Building and sending Solana transactions
+### "My frontend shows errors after deployment"
+- **Restart your dev server** - New environment variables need to be loaded
+- **Check `.env.local`** - Ensure `NEXT_PUBLIC_PROGRAM_ID` is set correctly
+- **Clear browser cache** - Hard refresh (Cmd+Shift+R / Ctrl+Shift+R)
 
-#### `src/lib/merkle-tree.ts`
-Implements the Merkle tree algorithm:
-- Creates leaves from recipient data (public key + amount + claim status)
-- Builds the tree using Keccak-256 hashing
-- Generates proofs for specific recipients
-- Verifies eligibility cryptographically
+### "Deploy setup fails with permission errors"
+- **Check Solana config**: `solana config get`
+- **Verify keypair access**: Make sure you can access your default keypair
+- **Try different RPC**: Sometimes devnet RPC is overloaded
 
-#### `src/lib/recipients.ts`
-Contains the airdrop distribution data:
-- List of eligible wallet addresses
-- Amount each address can claim
-- Merkle root for verification
-- Metadata about the airdrop
+### "Anchor commands fail"
+- **Check Anchor version**: `anchor --version` (needs 0.31.1+)
+- **Verify in anchor directory**: Run commands from `./anchor/` folder
+- **Clean and rebuild**: `anchor clean && anchor build`
 
-#### `src/components/claim-button.tsx`
-The main UI component that:
-- Handles user interactions
-- Shows real-time status updates
-- Manages the claiming flow
-- Displays success/error messages
+### "Test wallets have no SOL"
+- **Devnet faucet limits**: You can only request SOL every few seconds
+- **Manual funding**: Use `solana airdrop` command directly
+- **Alternative faucets**: Try https://faucet.solana.com
 
-## ⚙️ Configuration
+### "Transaction fees too high"
+- **You're on mainnet**: Make sure you're on devnet (`NEXT_PUBLIC_SOLANA_NETWORK=devnet`)
+- **Check network in config**: Verify all configurations point to devnet
 
-### Environment Variables
+## 🚀 Going to Production
 
-```ascii
-| Variable | Required | Description | Default |
-|----------|----------|-------------|---------|
-| `NEXT_PUBLIC_USER_PRIVATE_KEY` | Yes | User's wallet private key (Base58) | - |
-| `NEXT_PUBLIC_SOLANA_NETWORK` | No | Solana network to use | `devnet` |
-| `NEXT_PUBLIC_PROGRAM_ID` | No | Airdrop program address | Example program |
-```
+1. **Deploy to mainnet**: Change network configurations (⚠️ expensive!)
+2. **Update recipient data**: Replace test wallets with real recipient addresses
+3. **Secure private keys**: Use proper key management (never in environment files)
+4. **Test thoroughly**: Test on devnet first, then mainnet with small amounts
+5. **Monitor costs**: Solana mainnet transactions cost real money
 
-### Airdrop Configuration
+## 💡 Tips for Success
 
-Edit `src/lib/config.ts` to modify:
-- Network settings
-- Minimum SOL balance requirements
-- Debug logging preferences
-
-### Recipient Data
-
-Update `src/lib/recipients.ts` with:
-- Your actual recipient addresses
-- Corresponding claim amounts
-- Airdrop metadata (ID, description, etc.)
-
-## 🎯 Usage
-
-1. **For Recipients:**
-   - Open the application
-   - Ensure your wallet has the minimum SOL balance
-   - Click "Claim Airdrop"
-   - Wait for the process to complete
-   - Check your wallet for the claimed tokens
-
-2. **For Developers:**
-   - Customize the recipient list in `recipients.ts`
-   - Deploy your own Solana airdrop program
-   - Update the program ID in configuration
-   - Style the UI to match your brand
-
-## 🔐 Security Notes
-
-- **Private Key Handling**: The private key is used client-side only for signing transactions
-- **Environment Variables**: Use `NEXT_PUBLIC_` prefix only for non-sensitive config
-- **Claim Verification**: Each claim is cryptographically verified via Merkle proofs
-- **Double-Claim Protection**: The system checks and prevents double claiming
-
-## 🧪 Testing
-
-The template includes test data with 4 sample recipients:
-- 3 funded test wallets (2 SOL each)
-- 1 unfunded wallet (for testing insufficient balance)
-- Each eligible for 0.075 SOL (75M lamports)
-
-## 🚨 Important Notes
-
-- **Production Use**: Replace test data with real recipient information
-- **Private Keys**: Never commit private keys to version control
-- **Network Costs**: Each claim transaction costs ~0.000005 SOL in fees
-- **Program Deployment**: You'll need to deploy your own Solana program for production
-
-## 📝 Development
-
-```bash
-# Development
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Start production server
-pnpm start
-
-# Linting and formatting
-pnpm lint
-pnpm format
-```
+- **Start simple**: Use the exact setup process above before customizing
+- **Test everything**: Claim airdrops on devnet before going live
+- **Keep backups**: Save your deploy wallet and program keypairs safely
+- **Monitor resources**: Keep an eye on SOL balances for deployment and fees
+- **Read error messages**: Most errors have clear solutions in the logs
 
 ## 🤝 Contributing
 
+Found an issue or want to improve the template?
+
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and test thoroughly
+4. Submit a pull request with a clear description
 
 ## 📄 License
 
@@ -244,4 +335,6 @@ This project is open source and available under the MIT License.
 
 ---
 
-Built with ❤️ using Next.js, TypeScript, and Solana
+**Need help?** Check the error messages carefully - they often contain the exact solution! If you're stuck, the most common issues are covered in the troubleshooting section above.
+
+Built with ❤️ using Next.js, TypeScript, Anchor, and Solana
