@@ -84,7 +84,7 @@ pnpm dev
 
 ### Technical Architecture
 
-```
+```ascii
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Frontend UI   │───▶│  AirdropClient   │───▶│ Solana Program  │
 │  (ClaimButton)  │    │                  │    │                 │
@@ -99,7 +99,7 @@ pnpm dev
 
 ## 📁 Project Structure
 
-```
+```ascii
 src/
 ├── app/
 │   ├── page.tsx                 # Main page with ClaimButton
@@ -155,11 +155,13 @@ The main UI component that:
 
 ### Environment Variables
 
+```ascii
 | Variable | Required | Description | Default |
 |----------|----------|-------------|---------|
 | `NEXT_PUBLIC_USER_PRIVATE_KEY` | Yes | User's wallet private key (Base58) | - |
 | `NEXT_PUBLIC_SOLANA_NETWORK` | No | Solana network to use | `devnet` |
 | `NEXT_PUBLIC_AIRDROP_PROGRAM_ID` | No | Airdrop program address | Example program |
+```
 
 ### Airdrop Configuration
 
