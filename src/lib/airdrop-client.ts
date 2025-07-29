@@ -48,7 +48,7 @@ export class AirdropClient {
     const signer = await createKeyPairSignerFromBytes(privateKeyBytes)
     
     // 2. Generate PDAs
-    const programAddress = address(AIRDROP_CONFIG.AIRDROP_PROGRAM_ID)
+    const programAddress = address(AIRDROP_CONFIG.AIRDROP_PROGRAM_ID!)
     const [airdropStatePda] = await getProgramDerivedAddress({
       programAddress,
       seeds: ['merkle_tree'],
@@ -93,7 +93,7 @@ export class AirdropClient {
     }
     
     // 5. Generate PDAs
-    const programAddress = address(AIRDROP_CONFIG.AIRDROP_PROGRAM_ID)
+    const programAddress = address(AIRDROP_CONFIG.AIRDROP_PROGRAM_ID!)
     const [airdropStatePda] = await getProgramDerivedAddress({
       programAddress,
       seeds: ['merkle_tree'],

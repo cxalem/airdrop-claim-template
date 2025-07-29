@@ -37,7 +37,7 @@ NEXT_PUBLIC_USER_PRIVATE_KEY=your_private_key_here
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 
 # Optional: Airdrop program ID (defaults to example program)
-NEXT_PUBLIC_AIRDROP_PROGRAM_ID=ErbDoJTnJyG6EBXHeFochTsHJhB3Jfjc3MF1L9aNip3y
+NEXT_PUBLIC_PROGRAM_ID=1111111111111111111111111111111111111
 ```
 
 3. **Update recipient data:**
@@ -160,7 +160,7 @@ The main UI component that:
 |----------|----------|-------------|---------|
 | `NEXT_PUBLIC_USER_PRIVATE_KEY` | Yes | User's wallet private key (Base58) | - |
 | `NEXT_PUBLIC_SOLANA_NETWORK` | No | Solana network to use | `devnet` |
-| `NEXT_PUBLIC_AIRDROP_PROGRAM_ID` | No | Airdrop program address | Example program |
+| `NEXT_PUBLIC_PROGRAM_ID` | No | Airdrop program address | Example program |
 ```
 
 ### Airdrop Configuration

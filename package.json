@@ -2,6 +2,8 @@
   "name": "airdrop-claim-template",
   "scripts": {
     "build": "next build",
+    "deploy-setup": "cd anchor && ts-node scripts/deploy-setup.ts",
+    "extract-wallet": "cd anchor && ts-node scripts/extract-wallet.ts",
     "ci": "npm run build && npm run lint && npm run format:check",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
@@ -26,6 +28,7 @@
     "@wallet-ui/tailwind": "1.1.0-canary-20250617152337",
     "bs58": "^6.0.0",
     "clsx": "^2.1.1",
+    "@coral-xyz/anchor": "^0.31.1",
     "gill": "^0.10.2",
     "js-sha3": "^0.9.3",
     "next": "15.3.5",
@@ -46,6 +49,12 @@
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",
+    "@types/bn.js": "^5.1.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^9.0.0",
+    "chai": "^4.3.4",
+    "mocha": "^9.0.3",
+    "ts-mocha": "^10.0.0",
     "ws": "^8.18.3"
   }
 }

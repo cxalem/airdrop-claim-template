@@ -1,3 +1,19 @@
+/**
+ * Recipients Data
+ * 
+ * ⚠️  IMPORTANT: This file contains mock data for development purposes.
+ * 
+ * When you run the deploy-setup script (npx ts-node anchor/scripts/deploy-setup.ts),
+ * this file will be automatically updated with:
+ * - Real program ID from your deployment
+ * - Actual test wallet addresses
+ * - Computed merkle root
+ * - Current timestamps and metadata
+ * 
+ * The mock data below allows the frontend to work during development
+ * before you've set up your actual Solana program deployment.
+ */
+
 interface RecipientFromJson {
   publicKey: string
   amount: string
@@ -22,44 +38,44 @@ interface RecipientsFile {
 }
 
 export const RECIPIENTS_DATA: RecipientsFile = {
-  airdropId: 'solana-distributor-airdrop-2024',
-  description: 'Sample airdrop for testing purposes',
-  merkleRoot: '0x76fa4794dd39f41fa5a231ade7440c1e1caf466688aa2c89ec085ae39857a756',
+  airdropId: 'solana-distributor-airdrop-mock',
+  description: 'Mock airdrop data for development - will be updated by deploy-setup script',
+  merkleRoot: '0x0000000000000000000000000000000000000000000000000000000000000000',
   totalAmount: '300000000',
   network: 'devnet',
-  programId: 'ErbDoJTnJyG6EBXHeFochTsHJhB3Jfjc3MF1L9aNip3y',
+  programId: 'MockProgramId1111111111111111111111111111111',
   recipients: [
     {
-      publicKey: 'Hb6dzd4pYxmFYKkJDWuhzBEUkkaE93sFcvXYtriTkmw9',
+      publicKey: 'MockWallet111111111111111111111111111111111',
       amount: '75000000',
       index: 0,
-      description: 'Original test recipient'
+      description: 'Mock recipient 1 - Sample wallet for development'
     },
     {
-      publicKey: 'HcCcKydEcuGMbBso7jciQrFpBw1XQrKHKFckGSAxXXQG',
+      publicKey: 'MockWallet222222222222222222222222222222222',
       amount: '75000000',
       index: 1,
-      description: 'Test wallet 1 - Funded with 2 SOL'
+      description: 'Mock recipient 2 - Another sample wallet'
     },
     {
-      publicKey: 'H3LgCdztZyfE5zch3YAVXYj5D7bf19fR4QTbPtCho6Lu',
+      publicKey: 'MockWallet333333333333333333333333333333333',
       amount: '75000000',
       index: 2,
-      description: 'Test wallet 2 - Funded with 2 SOL'
+      description: 'Mock recipient 3 - Third sample wallet'
     },
     {
-      publicKey: '8aRyik34YsWL2gz2AYnBHoaxju52b3DHvFyMTCpddh4i',
+      publicKey: 'MockWallet444444444444444444444444444444444',
       amount: '75000000',
       index: 3,
-      description: 'Test wallet 3 - Unfunded (rate limited)'
+      description: 'Mock recipient 4 - Fourth sample wallet'
     }
   ],
   metadata: {
-    createdAt: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00.000Z',
     version: '1.0.0',
     algorithm: 'keccak256',
     leafFormat: 'recipient_pubkey(32) + amount(8) + is_claimed(1)'
   }
 }
 
-export type { RecipientFromJson, RecipientsFile } 
+export type { RecipientFromJson, RecipientsFile }

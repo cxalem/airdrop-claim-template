@@ -1,14 +1,18 @@
 /**
  * Airdrop System Configuration
  * Centralized configuration for the airdrop claiming system
+ * 
+ * 💡 For development: Uses mock program ID by default
+ * 🚀 For production: Set NEXT_PUBLIC_PROGRAM_ID environment variable
+ *    (automatically set when you run anchor/scripts/deploy-setup.ts)
  */
 
 export const AIRDROP_CONFIG = {
   // Network settings
   NETWORK: (process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet') as 'devnet' | 'mainnet' | 'testnet',
   
-  // Program addresses
-  AIRDROP_PROGRAM_ID: process.env.NEXT_PUBLIC_AIRDROP_PROGRAM_ID || 'ErbDoJTnJyG6EBXHeFochTsHJhB3Jfjc3MF1L9aNip3y',
+  // Program addresses (mock ID will be updated by deploy-setup script)
+  AIRDROP_PROGRAM_ID: process.env.NEXT_PUBLIC_PROGRAM_ID,
   
   // Transaction settings
   MIN_SOL_BALANCE: 0.005, // Minimum SOL needed for transaction fees
@@ -29,7 +33,7 @@ export function validateConfig(): void {
   }
   
   if (!AIRDROP_CONFIG.AIRDROP_PROGRAM_ID) {
-    throw new Error('NEXT_PUBLIC_AIRDROP_PROGRAM_ID environment variable is required')
+    throw new Error('NEXT_PUBLIC_PROGRAM_ID environment variable is required')
   }
 }
 
