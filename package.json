@@ -2,14 +2,22 @@
   "name": "airdrop-claim-template",
   "scripts": {
     "build": "next build",
-    "deploy-setup": "cd anchor && ts-node scripts/deploy-setup.ts",
-    "extract-wallet": "cd anchor && ts-node scripts/extract-wallet.ts",
+    "deploy-setup": "ts-node --project tsconfig.node.json anchor/scripts/deploy-setup.ts",
+    "extract-wallet": "ts-node --project tsconfig.node.json anchor/scripts/extract-wallet.ts",
+    "anchor:init": "ts-node --project tsconfig.node.json anchor/scripts/initialize-airdrop.ts",
+    "anchor:claim": "ts-node --project tsconfig.node.json anchor/scripts/claim-airdrop.ts",
+    "anchor:generate-proof": "ts-node --project tsconfig.node.json anchor/scripts/generate-proof.ts",
+    "anchor:test": "cd anchor && anchor test",
+    "anchor:build": "cd anchor && anchor build",
+    "anchor:deploy": "cd anchor && anchor deploy",
     "ci": "npm run build && npm run lint && npm run format:check",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "type-check": "tsc --noEmit",
+    "type-check:node": "tsc --project tsconfig.node.json --noEmit"
   },
   "description": "Next.js, Tailwind, Wallet UI",
   "keywords": [

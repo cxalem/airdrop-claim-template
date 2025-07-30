@@ -20,6 +20,21 @@ A complete Next.js template for creating and claiming Solana airdrops using Merk
 - **Rust** (for compiling Solana programs)
 - Access to **Solana Devnet** (with SOL for deployment costs)
 
+## 🔧 TypeScript Configuration
+
+This project uses a unified TypeScript configuration to avoid conflicts across different environments:
+
+- **Root `tsconfig.json`**: Next.js frontend configuration (ESNext, strict mode)
+- **`tsconfig.node.json`**: Node.js scripts configuration (CommonJS, extends root)
+- **`anchor/tsconfig.json`**: Anchor tests configuration (CommonJS, non-strict, mocha types)
+
+All npm scripts use the appropriate configuration automatically. If you encounter TypeScript errors, try:
+```bash
+npm run type-check        # Check frontend
+npm run type-check:node    # Check scripts
+cd anchor && anchor test   # Check anchor tests
+```
+
 ### Installing Prerequisites
 
 ```bash
