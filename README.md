@@ -20,35 +20,6 @@ A complete Next.js template for creating and claiming Solana airdrops using Merk
 - **Rust** (for compiling Solana programs)
 - Access to **Solana Devnet** (with SOL for deployment costs)
 
-## 🔧 TypeScript Configuration
-
-This project uses a unified TypeScript configuration to avoid conflicts across different environments:
-
-- **Root `tsconfig.json`**: Next.js frontend configuration (ESNext, strict mode)
-- **`tsconfig.node.json`**: Node.js scripts configuration (CommonJS, extends root)
-- **`anchor/tsconfig.json`**: Anchor tests configuration (CommonJS, non-strict, mocha types)
-
-All npm scripts use the appropriate configuration automatically. If you encounter TypeScript errors, try:
-```bash
-npm run type-check        # Check frontend
-npm run type-check:node    # Check scripts
-cd anchor && anchor test   # Check anchor tests
-```
-
-## 🔧 Program ID Mismatch Fix
-
-If you encounter `DeclaredProgramIdMismatch` errors during initialization, use the automatic fixer:
-
-```bash
-npm run deploy-setup:fix   # Fix program ID mismatches automatically
-```
-
-This will:
-- ✅ Compare deployed program ID with declared ID in source code
-- ✅ Update all configuration files if mismatch is found
-- ✅ Rebuild the program with correct references
-- ✅ Update frontend TypeScript files
-
 ### Installing Prerequisites
 
 ```bash
@@ -63,9 +34,7 @@ solana --version
 anchor --version
 ```
 
-## 🛠️ Complete Setup Guide
-
-Follow these steps exactly to go from zero to a fully working airdrop system:
+## 🛠️ Quick Setup Guide
 
 ### Step 1: Clone and Install
 
@@ -75,242 +44,106 @@ cd airdrop-claim-template
 pnpm install
 ```
 
-**Common Issues:**
-- `pnpm not found`: Install pnpm with `npm install -g pnpm`
-- `Permission denied`: Run with `sudo` or fix npm permissions
-
-### Step 2: Add Your Private Key
-
-Create a `.env.local` file in the project root:
+### Step 2: Deploy and Setup
 
 ```bash
-# Your wallet's private key (Base58 encoded) - this will be one of the airdrop recipients
+pnpm airdrop:setup
+```
+
+This single command will:
+- ✅ Create deployment wallet and fund it with SOL
+- ✅ Generate test wallets for airdrop recipients  
+- ✅ Build and deploy the Solana program
+- ✅ Update all configuration files
+- ✅ Generate Merkle tree for airdrop distribution
+
+### Step 3: Initialize the Airdrop
+
+```bash
+pnpm airdrop:init
+```
+
+This command sets up the on-chain airdrop state and makes it ready for claiming.
+
+### Step 4: Update Your Environment File
+
+After running the setup commands, you need to update your `.env.local` file with:
+
+1. **Program ID** (automatically added by the setup script)
+2. **Your private key** (from the generated test wallets)
+
+Create or update `.env.local`:
+
+```bash
+# Program ID (automatically set by setup script)
+NEXT_PUBLIC_PROGRAM_ID=your_deployed_program_id_here
+
+# Your private key (get this from anchor/test-wallets.json)
 NEXT_PUBLIC_USER_PRIVATE_KEY=your_base58_private_key_here
 
-# Optional: Network (defaults to devnet)
+# Network (optional, defaults to devnet)
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 ```
 
-**How to get your private key:**
-```bash
-# If you have a Solana keypair file:
-solana-keygen pubkey ~/.config/solana/id.json  # Shows public key
-cat ~/.config/solana/id.json  # Shows the keypair array
-
-# Convert keypair array to base58 (if needed):
-# Use online tools or Solana CLI to convert
-```
-
-**⚠️ Security Warning:** Never commit private keys to version control! The `.env.local` file is gitignored for your safety.
-
-### Step 3: Run the Deploy Setup Script
-
-This is the magic command that sets everything up:
+**Getting your private key:**
+The setup script generates test wallets in `anchor/test-wallets.json`. Use the `base58` private key from any of the generated wallets:
 
 ```bash
-pnpm deploy-setup
+# View generated wallets
+cat anchor/test-wallets.json
+
+# Copy the "base58" private key from any wallet and add it to .env.local
 ```
 
-**What this script does:**
-1. **Creates/loads deployment wallet** - Generates or imports a wallet for deploying the program
-2. **Requests SOL from faucet** - Automatically funds wallets on devnet  
-3. **Generates test wallets** - Creates additional test wallets (your private key becomes one of the recipients)
-4. **Builds configuration files** - Updates `recipients.json`, `Anchor.toml`, etc.
-5. **Generates Merkle tree** - Computes cryptographic proofs for all recipients
-6. **Updates frontend code** - Automatically updates `src/lib/recipients.ts` with real data
-7. **Deploys Solana program** - Compiles and deploys your airdrop program to devnet
-8. **Updates environment file** - Automatically adds the program ID to `.env.local`
-9. **Shows initialization command** - Provides the exact command to initialize the airdrop
-
-**Interactive Prompts:**
-- Choose to use existing wallets or create new ones
-- Decide how many test wallets to create (default: 3)
-- Choose whether to deploy with a new program ID
-- Confirm deployment
-
-**Common Errors & Solutions:**
-
-**Error: `ANCHOR_PROVIDER_URL is not defined`**
-```bash
-# The script handles this automatically now, but if you run commands manually:
-export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
-export ANCHOR_WALLET=./deploy-wallet.json
-```
-
-**Error: `Transaction simulation failed`**
-- **Cause:** Program not deployed or not initialized
-- **Solution:** Make sure you completed the full deploy-setup process
-
-**Error: `Insufficient SOL balance`**
-- **Cause:** Deploy wallet needs more SOL for deployment costs
-- **Solution:** 
-  ```bash
-  # Check balance
-  solana balance <your-deploy-wallet-address> --url devnet
-  
-  # Request more SOL
-  solana airdrop 2 <your-deploy-wallet-address> --url devnet
-  ```
-
-**Error: `Program ID mismatch`**
-- **Cause:** Frontend using wrong program ID
-- **Solution:** The script now fixes this automatically, but verify `.env.local` has the right `NEXT_PUBLIC_PROGRAM_ID`
-
-**Error: `Airdrop rate limit exceeded`**
-- **Cause:** Too many faucet requests
-- **Solution:** Wait a few minutes and try again, or fund wallets manually
-
-### Step 4: Initialize the Airdrop
-
-After successful deployment, you'll see a command to initialize the airdrop:
+### Step 5: Start the Frontend
 
 ```bash
-🎯 Now you can cd anchor and run:
-ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
-ANCHOR_WALLET=./deploy-wallet.json \
-npx ts-node scripts/initialize-airdrop.ts
+pnpm dev
 ```
 
-Run this command to set up the on-chain airdrop state:
+Open [http://localhost:3000](http://localhost:3000) and you should see the airdrop claiming interface.
 
-```bash
-cd anchor
-ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
-ANCHOR_WALLET=./deploy-wallet.json \
-npx ts-node scripts/initialize-airdrop.ts
-```
-
-This step:
-- Sets up the on-chain airdrop state with the Merkle root
-- Configures the total amount and recipient count
-- Makes the airdrop ready for claiming
-
-### Step 5: Verify Setup Success
-
-After the deploy script completes, you should see:
-
-```
-🎯 Now you can cd anchor and run:
-ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
-ANCHOR_WALLET=./deploy-wallet.json \
-npx ts-node scripts/initialize-airdrop.ts
-
-📁 Files created/updated:
-   - deploy-wallet.json
-   - test-wallets.json  
-   - recipients.json (updated)
-   - src/lib/recipients.ts (updated)
-   - Anchor.toml (updated)
-   - .env.local or .env (updated with program ID)
-```
-
-After running the initialization command, you'll be ready to claim airdrops!
-
-**Verify your setup:**
-```bash
-# Check your program ID was added
-cat ../.env.local
-
-# Verify recipients include your wallet
-cat recipients.json
-
-# Check deployed program exists
-solana program show <your-program-id> --url devnet
-```
-
-### Step 6: Start the Frontend
-
-```bash
-cd ..  # Back to project root
-pnpm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) - you should see the airdrop claiming interface.
-
-**Common Issues:**
-- **Blank page**: Check browser console for errors
-- **"Program ID not found"**: Restart dev server to pick up new environment variables
-- **TypeScript errors**: Run `pnpm build` to check for issues
-
-### Step 7: Claim Your Airdrop
+### Step 6: Claim Your Airdrop
 
 1. **Open the app** - Go to http://localhost:3000
-2. **Click "Claim Airdrop"** - The button should be enabled
-3. **Watch the process** - You'll see status updates:
-   - "Initializing..."
-   - "Checking if airdrop has already been claimed..."
-   - "Claiming airdrop..."
-   - "Success!" (with transaction signature)
+2. **Click "Claim Airdrop"** - The button should be enabled for your wallet
+3. **Watch the process** - You'll see status updates and success confirmation
 
-**The claiming process:**
-1. **Validates configuration** - Checks private key and program ID
-2. **Checks claim status** - Verifies you haven't already claimed
-3. **Validates eligibility** - Confirms you're in the recipients list
-4. **Checks SOL balance** - Ensures you have enough for transaction fees
-5. **Generates Merkle proof** - Creates cryptographic proof of eligibility
-6. **Sends transaction** - Submits claim to the Solana program
-7. **Confirms success** - Displays amount claimed and transaction link
+## 🔧 Manual Commands (Advanced)
 
-**Common Claiming Errors:**
-
-**Error: `Address not eligible for this airdrop`**
-- **Cause:** Your private key doesn't match any recipient address
-- **Solution:** Make sure the private key in `.env.local` corresponds to one of the recipients in your setup
-
-**Error: `Insufficient SOL balance`** 
-- **Cause:** Your wallet needs SOL for transaction fees (minimum 0.005 SOL)
-- **Solution:**
-  ```bash
-  solana airdrop 1 <your-public-key> --url devnet
-  ```
-
-**Error: `Airdrop has already been claimed`**
-- **Cause:** You (or someone with this private key) already claimed
-- **Solution:** This is working as intended! Each address can only claim once
-
-**Error: `Transaction simulation failed`**
-- **Cause:** Usually a program or initialization issue
-- **Solution:** 
-  ```bash
-  # Re-run initialization if needed
-  cd anchor
-  ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
-  ANCHOR_WALLET=./deploy-wallet.json \
-  npx ts-node scripts/initialize-airdrop.ts
-  ```
-
-## 🧪 Testing with Command Line
-
-You can also test claiming via command line:
+If you need more control over the process:
 
 ```bash
-# From the anchor directory
-cd anchor
+# Fix program ID mismatches
+pnpm deploy-setup:fix
 
-# Extract private keys from test wallets
-npx ts-node scripts/extract-private-keys.ts
+# Extract wallet information  
+pnpm extract-wallet
 
-# Claim for a specific recipient
-npx ts-node scripts/claim-airdrop.ts <public-key> <base58-private-key>
+# Type checking
+pnpm type-check        # Frontend
+pnpm type-check:node   # Scripts
+
+# Anchor operations
+pnpm anchor:build
+pnpm anchor:deploy  
+pnpm anchor:test
 ```
 
-## 🔄 Development Workflow
+## 🐛 Common Issues
 
-### For Initial Development (Mock Data)
-- The template comes with mock data that allows frontend development
-- You can work on UI/UX before deploying any Solana programs
-- Mock program ID: `MockProgramId1111111111111111111111111111111`
+**Error: `Address not eligible for this airdrop`**
+- Make sure the private key in `.env.local` corresponds to one of the recipients in `anchor/test-wallets.json`
 
-### For Real Deployment
-- Run the deploy-setup script to replace mock data with real deployment
-- All configuration files are automatically updated
-- Environment variables are set automatically
+**Error: `Insufficient SOL balance`** 
+- Your wallet needs SOL for transaction fees: `solana airdrop 1 <your-public-key> --url devnet`
 
-### Making Changes
-- **Add more recipients**: Edit the test wallet creation in `deploy-setup.ts`
-- **Change airdrop amounts**: Modify the amount in the recipients generation
-- **Update UI**: Customize components in `src/components/`
-- **Deploy to mainnet**: Change network settings (⚠️ be very careful!)
+**Error: `Program ID not found`**
+- Restart your dev server to pick up new environment variables
+- Verify `NEXT_PUBLIC_PROGRAM_ID` is set in `.env.local`
+
+**Error: `Transaction simulation failed`**
+- Re-run the initialization: `pnpm airdrop:init`
 
 ## 📁 Project Structure
 
@@ -335,32 +168,6 @@ npx ts-node scripts/claim-airdrop.ts <public-key> <base58-private-key>
 │       └── merkle-tree.ts         # Merkle tree & proof generation
 └── .env.local                     # 🔄 Auto-updated environment config
 ```
-
-## 🐛 Troubleshooting Common Issues
-
-### "My frontend shows errors after deployment"
-- **Restart your dev server** - New environment variables need to be loaded
-- **Check `.env.local`** - Ensure `NEXT_PUBLIC_PROGRAM_ID` is set correctly
-- **Clear browser cache** - Hard refresh (Cmd+Shift+R / Ctrl+Shift+R)
-
-### "Deploy setup fails with permission errors"
-- **Check Solana config**: `solana config get`
-- **Verify keypair access**: Make sure you can access your default keypair
-- **Try different RPC**: Sometimes devnet RPC is overloaded
-
-### "Anchor commands fail"
-- **Check Anchor version**: `anchor --version` (needs 0.31.1+)
-- **Verify in anchor directory**: Run commands from `./anchor/` folder
-- **Clean and rebuild**: `anchor clean && anchor build`
-
-### "Test wallets have no SOL"
-- **Devnet faucet limits**: You can only request SOL every few seconds
-- **Manual funding**: Use `solana airdrop` command directly
-- **Alternative faucets**: Try https://faucet.solana.com
-
-### "Transaction fees too high"
-- **You're on mainnet**: Make sure you're on devnet (`NEXT_PUBLIC_SOLANA_NETWORK=devnet`)
-- **Check network in config**: Verify all configurations point to devnet
 
 ## 🚀 Going to Production
 
