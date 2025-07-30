@@ -95,7 +95,7 @@ This is the magic command that sets everything up:
 
 ```bash
 cd anchor
-npx ts-node scripts/deploy-setup.ts
+pnpm deploy-setup
 ```
 
 **What this script does:**
