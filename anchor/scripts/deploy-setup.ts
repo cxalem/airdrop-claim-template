@@ -925,7 +925,7 @@ export type { RecipientFromJson, RecipientsFile } `;
 
       // Step 3.5: Generate merkle tree and update recipients.json
       console.log("\n🌳 Generating merkle tree and updating recipients...");
-      const { merkleRoot } = this.generateMerkleTree();
+      this.generateMerkleTree();
 
       // Step 3.6: Update TypeScript recipients file
       console.log("\n📝 Updating TypeScript recipients file...");
