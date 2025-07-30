@@ -13,7 +13,13 @@ async function autoFixCommonIssues(): Promise<boolean> {
   let fixesApplied = false;
   
   try {
-    // Check 1: Missing TypeScript types
+    // Check 1: Always ensure we have a fresh build and deployment
+    console.log("🔄 Ensuring program is built and deployed with correct ID...");
+    execSync("anchor build", { stdio: "inherit" });
+    execSync("anchor deploy", { stdio: "inherit" });
+    fixesApplied = true;
+    
+    // Check 2: Missing TypeScript types
     const typesPath = "target/types/solana_distributor.ts";
     if (!fs.existsSync(typesPath)) {
       console.log("⚠️  Missing TypeScript types, generating...");
@@ -22,29 +28,28 @@ async function autoFixCommonIssues(): Promise<boolean> {
       fixesApplied = true;
     }
     
-    // Check 2: Missing IDL file
+    // Check 3: Verify IDL consistency
     const idlPath = "target/idl/solana_distributor.json";
     if (!fs.existsSync(idlPath)) {
       console.log("⚠️  Missing IDL file, rebuilding...");
       execSync("anchor build", { stdio: "inherit" });
-      execSync("anchor idl type target/idl/solana_distributor.json -o target/types/solana_distributor.ts", { stdio: "inherit" });
-      console.log("✅ IDL and types generated");
+      console.log("✅ IDL generated");
       fixesApplied = true;
     }
     
-    // Check 3: Program ID consistency
+    // Check 4: Verify program ID consistency after deployment
     const declaredId = getDeclaredProgramId();
-    const deployedId = getDeployedProgramId();
+    const idlId = getIdlProgramId();
     
-    if (declaredId && deployedId && declaredId !== deployedId) {
-      console.log("⚠️  Program ID mismatch detected!");
-      console.log(`   Declared: ${declaredId}`);
-      console.log(`   Deployed: ${deployedId}`);
-      console.log("🔄 Redeploying program to fix mismatch...");
+    if (declaredId && idlId && declaredId !== idlId) {
+      console.log("⚠️  Program ID still mismatched after deployment!");
+      console.log(`   Declared in lib.rs: ${declaredId}`);
+      console.log(`   IDL file: ${idlId}`);
+      console.log("🔄 Regenerating IDL with correct program ID...");
       
+      // Force regenerate IDL
       execSync("anchor build", { stdio: "inherit" });
-      execSync("anchor deploy", { stdio: "inherit" });
-      console.log("✅ Program redeployed successfully");
+      console.log("✅ IDL regenerated");
       fixesApplied = true;
     }
     
@@ -76,10 +81,15 @@ function getDeclaredProgramId(): string | null {
   }
 }
 
-function getDeployedProgramId(): string | null {
+function getIdlProgramId(): string | null {
   try {
-    const output = execSync("solana address -k target/deploy/solana_distributor-keypair.json", { encoding: "utf8" });
-    return output.trim();
+    const idlPath = "target/idl/solana_distributor.json";
+    if (fs.existsSync(idlPath)) {
+      const idlContent = fs.readFileSync(idlPath, "utf8");
+      const idl = JSON.parse(idlContent);
+      return idl.address || null;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -91,6 +101,16 @@ export async function initializeAirdrop(
 ) {
   try {
     console.log("🚀 Initializing airdrop...");
+
+    // Proactive check for common issues before starting
+    console.log("🔍 Performing pre-flight checks...");
+    const declaredId = getDeclaredProgramId();
+    const idlId = getIdlProgramId();
+    
+    if (!declaredId || !idlId || declaredId !== idlId) {
+      console.log("⚠️  Detected potential program ID issues, running auto-fix...");
+      await autoFixCommonIssues();
+    }
 
     // Set up proper environment variables for Anchor
     const env = {
@@ -206,10 +226,14 @@ export async function initializeAirdrop(
     console.error("❌ Error initializing airdrop:", error);
     
     // Check if this is a common issue we can auto-fix
-        if (error instanceof Error && (
+    if (error instanceof Error && (
         error.message?.includes("Cannot find module") ||
         error.message?.includes("DeclaredProgramIdMismatch") ||
-        error.message?.includes("AccountNotInitialized"))) {
+        error.message?.includes("AccountNotInitialized") ||
+        error.message?.includes("Error Code: DeclaredProgramIdMismatch") ||
+        error.message?.includes("4100") ||
+        (error as any)?.error?.errorCode?.code === "DeclaredProgramIdMismatch" ||
+        (error as any)?.errorLogs?.some((log: string) => log.includes("DeclaredProgramIdMismatch")))) {
       
       console.log("\n🔧 Attempting to auto-fix common issues...");
       const fixesApplied = await autoFixCommonIssues();
