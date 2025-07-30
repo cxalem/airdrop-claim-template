@@ -177,7 +177,7 @@ class SolanaDeploymentSetup {
   private saveWalletFile(wallet: WalletInfo): void {
     // Only save deploy wallet file (others are stored in test-wallets.json)
     if (wallet.isDeployWallet) {
-      const walletPath = wallet.keypairFile;
+      const walletPath = `anchor/${wallet.keypairFile}`;
       fs.writeFileSync(walletPath, JSON.stringify(wallet.secretKey.array));
       console.log(`💾 Saved wallet file: ${walletPath}`);
     }
@@ -217,11 +217,12 @@ class SolanaDeploymentSetup {
 
   private loadExistingWallets(): { deployWallet: WalletInfo | null; testWallets: WalletInfo[] } {
     try {
-      if (!fs.existsSync("test-wallets.json")) {
+      const testWalletsPath = "anchor/test-wallets.json";
+      if (!fs.existsSync(testWalletsPath)) {
         return { deployWallet: null, testWallets: [] };
       }
 
-      const testWalletsData = JSON.parse(fs.readFileSync("test-wallets.json", "utf8"));
+      const testWalletsData = JSON.parse(fs.readFileSync(testWalletsPath, "utf8"));
       const wallets = testWalletsData.wallets || [];
       
       const deployWallet = wallets.find((w: any) => w.isDeployWallet || w.name === "deploy-wallet");
@@ -236,9 +237,10 @@ class SolanaDeploymentSetup {
 
   private createDeployWalletFile(wallet: WalletInfo): void {
     // Only create individual file for deploy wallet (needed by Anchor)
-    if (wallet.isDeployWallet && !fs.existsSync(wallet.keypairFile)) {
-      fs.writeFileSync(wallet.keypairFile, JSON.stringify(wallet.secretKey.array));
-      console.log(`💾 Created deploy wallet file: ${wallet.keypairFile}`);
+    const walletPath = `anchor/${wallet.keypairFile}`;
+    if (wallet.isDeployWallet && !fs.existsSync(walletPath)) {
+      fs.writeFileSync(walletPath, JSON.stringify(wallet.secretKey.array));
+      console.log(`💾 Created deploy wallet file: ${walletPath}`);
     }
   }
 
@@ -470,8 +472,9 @@ class SolanaDeploymentSetup {
       },
     };
 
-    fs.writeFileSync("test-wallets.json", JSON.stringify(testWalletsData, null, 2));
-    console.log("💾 Saved test-wallets.json");
+    const testWalletsPath = "anchor/test-wallets.json";
+    fs.writeFileSync(testWalletsPath, JSON.stringify(testWalletsData, null, 2));
+    console.log("💾 Saved anchor/test-wallets.json");
   }
 
   private updateAnchorConfig(deployWallet: WalletInfo): void {
@@ -497,8 +500,9 @@ wallet = "${deployWallet.keypairFile}"
 test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 `;
 
-    fs.writeFileSync("Anchor.toml", anchorToml);
-    console.log(`✅ Updated Anchor.toml to use ${deployWallet.keypairFile}`);
+    const anchorTomlPath = "anchor/Anchor.toml";
+    fs.writeFileSync(anchorTomlPath, anchorToml);
+    console.log(`✅ Updated anchor/Anchor.toml to use ${deployWallet.keypairFile}`);
   }
 
   private generateRecipientsJson(testWallets: WalletInfo[]): void {
@@ -512,10 +516,11 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
     const totalAmount = (recipients.length * 75000000).toString();
 
     // Check if recipients.json already exists with the same wallets
+    const recipientsPath = "anchor/recipients.json";
     let shouldUpdate = true;
-    if (fs.existsSync("recipients.json")) {
+    if (fs.existsSync(recipientsPath)) {
       try {
-        const existingData = JSON.parse(fs.readFileSync("recipients.json", "utf8"));
+        const existingData = JSON.parse(fs.readFileSync(recipientsPath, "utf8"));
         const existingPublicKeys = existingData.recipients?.map((r: any) => r.publicKey) || [];
         const newPublicKeys = recipients.map(r => r.publicKey);
         
@@ -524,7 +529,7 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
           console.log("📋 Recipients unchanged, updating descriptions only");
           existingData.recipients = recipients;
           existingData.description = "Deployment setup airdrop for testing purposes";
-          fs.writeFileSync("recipients.json", JSON.stringify(existingData, null, 2));
+          fs.writeFileSync(recipientsPath, JSON.stringify(existingData, null, 2));
           shouldUpdate = false;
         }
       } catch (error) {
@@ -549,8 +554,8 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
         },
       };
 
-      fs.writeFileSync("recipients.json", JSON.stringify(recipientsData, null, 2));
-      console.log("📋 Generated recipients.json");
+      fs.writeFileSync(recipientsPath, JSON.stringify(recipientsData, null, 2));
+      console.log("📋 Generated anchor/recipients.json");
     }
   }
 
@@ -559,7 +564,8 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
       console.log("🌳 Generating Merkle tree...");
 
       // Load recipients data
-      const recipientsData = JSON.parse(fs.readFileSync("recipients.json", "utf8"));
+      const recipientsPath = "anchor/recipients.json";
+      const recipientsData = JSON.parse(fs.readFileSync(recipientsPath, "utf8"));
 
       // Convert to format expected by merkle tree
       const recipients: Recipient[] = recipientsData.recipients.map((r: any) => ({
@@ -581,8 +587,8 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
       recipientsData.metadata.leafFormat = "recipient_pubkey(32) + amount(8) + is_claimed(1)";
 
       // Write back to file
-      fs.writeFileSync("recipients.json", JSON.stringify(recipientsData, null, 2));
-      console.log(`✅ Updated recipients.json with merkle root`); 
+      fs.writeFileSync(recipientsPath, JSON.stringify(recipientsData, null, 2));
+      console.log(`✅ Updated anchor/recipients.json with merkle root`); 
 
       return {
         merkleRoot: merkleRootHex,
@@ -622,14 +628,14 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
   private getCurrentProgramId(): string {
     try {
       // Try to read from Anchor.toml first
-      const anchorContent = fs.readFileSync("Anchor.toml", "utf8");
+      const anchorContent = fs.readFileSync("anchor/Anchor.toml", "utf8");
       const match = anchorContent.match(/solana_distributor = "([^"]+)"/);
       if (match) {
         return match[1];
       }
       
       // Fallback to reading from lib.rs
-      const libContent = fs.readFileSync("programs/solana-distributor/src/lib.rs", "utf8");
+      const libContent = fs.readFileSync("anchor/programs/solana-distributor/src/lib.rs", "utf8");
       const libMatch = libContent.match(/declare_id!\("([^"]+)"\);/);
       if (libMatch) {
         return libMatch[1];
@@ -647,24 +653,26 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
       console.log("📝 Updating program references...");
       
       // Update lib.rs
-      const libPath = "programs/solana-distributor/src/lib.rs";
+      const libPath = "anchor/programs/solana-distributor/src/lib.rs";
       let libContent = fs.readFileSync(libPath, "utf8");
       libContent = libContent.replace(/declare_id!\(".*"\);/, `declare_id!("${newProgramId}");`);
       fs.writeFileSync(libPath, libContent);
-      console.log("   ✅ Updated programs/solana-distributor/src/lib.rs");
+      console.log("   ✅ Updated anchor/programs/solana-distributor/src/lib.rs");
       
       // Update Anchor.toml
-      let anchorContent = fs.readFileSync("Anchor.toml", "utf8");
+      const anchorTomlPath = "anchor/Anchor.toml";
+      let anchorContent = fs.readFileSync(anchorTomlPath, "utf8");
       anchorContent = anchorContent.replace(/solana_distributor = ".*"/, `solana_distributor = "${newProgramId}"`);
-      fs.writeFileSync("Anchor.toml", anchorContent);
-      console.log("   ✅ Updated Anchor.toml");
+      fs.writeFileSync(anchorTomlPath, anchorContent);
+      console.log("   ✅ Updated anchor/Anchor.toml");
       
       // Update recipients.json if it exists
-      if (fs.existsSync("recipients.json")) {
-        const recipientsData = JSON.parse(fs.readFileSync("recipients.json", "utf8"));
+      const recipientsPath = "anchor/recipients.json";
+      if (fs.existsSync(recipientsPath)) {
+        const recipientsData = JSON.parse(fs.readFileSync(recipientsPath, "utf8"));
         recipientsData.programId = newProgramId;
-        fs.writeFileSync("recipients.json", JSON.stringify(recipientsData, null, 2));
-        console.log("   ✅ Updated recipients.json");
+        fs.writeFileSync(recipientsPath, JSON.stringify(recipientsData, null, 2));
+        console.log("   ✅ Updated anchor/recipients.json");
       }
       
       console.log("✅ All program references updated!");
@@ -679,28 +687,27 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
       console.log("📝 Updating src/lib/recipients.ts...");
       
       // Read the generated recipients.json
-      if (!fs.existsSync("recipients.json")) {
-        console.log("⚠️  recipients.json not found, skipping TypeScript update");
+      const recipientsPath = "anchor/recipients.json";
+      if (!fs.existsSync(recipientsPath)) {
+        console.log("⚠️  anchor/recipients.json not found, skipping TypeScript update");
         return;
       }
       
-      const recipientsData = JSON.parse(fs.readFileSync("recipients.json", "utf8"));
+      const recipientsData = JSON.parse(fs.readFileSync(recipientsPath, "utf8"));
       
       // Generate the TypeScript file content
       const tsContent = `/**
  * Recipients Data
  * 
- * ⚠️  IMPORTANT: This file contains mock data for development purposes.
+ * ✅ GENERATED: This file was automatically generated by the deploy-setup script.
  * 
- * When you run the deploy-setup script (npx ts-node anchor/scripts/deploy-setup.ts),
- * this file will be automatically updated with:
- * - Real program ID from your deployment
- * - Actual test wallet addresses
- * - Computed merkle root
- * - Current timestamps and metadata
+ * This file contains REAL data from your deployment:
+ * - Real program ID: ${recipientsData.programId}
+ * - Actual test wallet addresses (${recipientsData.recipients.length} recipients)
+ * - Computed merkle root: ${recipientsData.merkleRoot}
+ * - Generated at: ${recipientsData.metadata.createdAt}
  * 
- * The mock data below allows the frontend to work during development
- * before you've set up your actual Solana program deployment.
+ * Do not edit this file manually - it will be overwritten when you run deploy-setup again.
  */
 
 interface RecipientFromJson {
@@ -731,7 +738,7 @@ export const RECIPIENTS_DATA: RecipientsFile = ${JSON.stringify(recipientsData, 
 export type { RecipientFromJson, RecipientsFile } `;
       
       // Write to the TypeScript file
-      const recipientsTsPath = "../src/lib/recipients.ts";
+      const recipientsTsPath = "src/lib/recipients.ts";
       if (!fs.existsSync(path.dirname(recipientsTsPath))) {
         fs.mkdirSync(path.dirname(recipientsTsPath), { recursive: true });
       }
@@ -814,20 +821,20 @@ export type { RecipientFromJson, RecipientsFile } `;
       
       // Build the program first to create target/deploy directory
       console.log("🔨 Building program...");
-      execSync("anchor build", { stdio: "inherit" });
+      execSync("anchor build", { stdio: "inherit", cwd: "anchor" });
       
       // Now copy the program keypair after build creates the directory
       if (newKeypairPath) {
         console.log("📋 Setting up program keypair...");
         // Ensure target/deploy directory exists
-        execSync("mkdir -p target/deploy");
-        execSync(`cp ${newKeypairPath} target/deploy/solana_distributor-keypair.json`);
+        execSync("mkdir -p anchor/target/deploy");
+        execSync(`cp ${newKeypairPath} anchor/target/deploy/solana_distributor-keypair.json`);
         console.log("✅ Program keypair configured");
       }
       
       // Deploy the program
       console.log("📡 Deploying program...");
-      execSync("anchor deploy", { stdio: "inherit" });
+      execSync("anchor deploy", { stdio: "inherit", cwd: "anchor" });
       
       console.log("✅ Program deployed successfully!");
       return true;
@@ -884,6 +891,7 @@ export type { RecipientFromJson, RecipientsFile } `;
       
       execSync("npx ts-node scripts/initialize-airdrop.ts", { 
         stdio: "inherit",
+        cwd: "anchor",
         env
       });
       
@@ -892,6 +900,7 @@ export type { RecipientFromJson, RecipientsFile } `;
     } catch (error) {
       console.error("❌ Airdrop initialization failed:", error);
       console.log("💡 You can try manually with:");
+      console.log("   cd anchor");
       console.log("   ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \\");
       console.log("   ANCHOR_WALLET=./deploy-wallet.json \\");
       console.log("   npx ts-node scripts/initialize-airdrop.ts");
@@ -973,16 +982,16 @@ export type { RecipientFromJson, RecipientsFile } `;
       this.wallets.forEach(wallet => {
         console.log(`   - ${wallet.keypairFile}`);
       });
-      console.log("   - test-wallets.json");
-      console.log("   - recipients.json (updated)");
+      console.log("   - anchor/test-wallets.json");
+      console.log("   - anchor/recipients.json (updated)");
       console.log("   - src/lib/recipients.ts (updated)");
-      console.log("   - Anchor.toml (updated)");
+      console.log("   - anchor/Anchor.toml (updated)");
       if (deploySuccess) {
         console.log("   - .env.local or .env (updated with program ID)");
       }
       
       console.log("\n🚀 Status summary:");
-      console.log("1. ✅ Merkle tree generated and recipients.json updated");
+      console.log("1. ✅ Merkle tree generated and anchor/recipients.json updated");
       if (deploySuccess) {
         console.log("2. ✅ Program deployed successfully");
         if (initSuccess) {
@@ -1014,7 +1023,7 @@ export type { RecipientFromJson, RecipientsFile } `;
         }
       }
       
-      console.log("\n💡 Wallet information saved in test-wallets.json");
+      console.log("\n💡 Wallet information saved in anchor/test-wallets.json");
       console.log("   Use 'npx ts-node scripts/extract-private-keys.ts' to view keys");
 
     } catch (error) {
