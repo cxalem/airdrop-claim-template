@@ -35,6 +35,20 @@ npm run type-check:node    # Check scripts
 cd anchor && anchor test   # Check anchor tests
 ```
 
+## 🔧 Program ID Mismatch Fix
+
+If you encounter `DeclaredProgramIdMismatch` errors during initialization, use the automatic fixer:
+
+```bash
+npm run deploy-setup:fix   # Fix program ID mismatches automatically
+```
+
+This will:
+- ✅ Compare deployed program ID with declared ID in source code
+- ✅ Update all configuration files if mismatch is found
+- ✅ Rebuild the program with correct references
+- ✅ Update frontend TypeScript files
+
 ### Installing Prerequisites
 
 ```bash

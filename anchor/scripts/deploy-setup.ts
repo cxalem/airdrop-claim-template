@@ -673,6 +673,10 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
         recipientsData.programId = newProgramId;
         fs.writeFileSync(recipientsPath, JSON.stringify(recipientsData, null, 2));
         console.log("   ✅ Updated anchor/recipients.json");
+        
+        // Also update the frontend TypeScript file
+        console.log("   📝 Updating frontend recipients.ts...");
+        this.updateRecipientsTypeScript();
       }
       
       console.log("✅ All program references updated!");
@@ -801,6 +805,69 @@ export type { RecipientFromJson, RecipientsFile } `;
     }
   }
 
+  private getDeployedProgramId(): string {
+    try {
+      // Get the program ID from the deployed program binary
+      const output = execSync("solana address -k anchor/target/deploy/solana_distributor-keypair.json", { encoding: "utf8" });
+      return output.trim();
+    } catch (error) {
+      console.error("⚠️  Could not get deployed program ID:", error);
+      return "";
+    }
+  }
+
+  private getDeclaredProgramId(): string {
+    try {
+      // Get the program ID declared in the Rust source code
+      const libContent = fs.readFileSync("anchor/programs/solana-distributor/src/lib.rs", "utf8");
+      const match = libContent.match(/declare_id!\("([^"]+)"\);/);
+      if (match) {
+        return match[1];
+      }
+      throw new Error("Could not find declare_id! in lib.rs");
+    } catch (error) {
+      console.error("⚠️  Could not get declared program ID:", error);
+      return "";
+    }
+  }
+
+  private async verifyAndFixProgramId(): Promise<void> {
+    try {
+      console.log("🔍 Verifying program ID consistency...");
+      
+      const deployedId = this.getDeployedProgramId();
+      const declaredId = this.getDeclaredProgramId();
+      
+      if (!deployedId || !declaredId) {
+        console.log("⚠️  Could not verify program IDs - skipping verification");
+        return;
+      }
+      
+      console.log(`📍 Deployed program ID:  ${deployedId}`);
+      console.log(`📋 Declared program ID:  ${declaredId}`);
+      
+      if (deployedId !== declaredId) {
+        console.log("⚠️  Program ID mismatch detected!");
+        console.log("🔧 Updating all program references to match deployed program...");
+        
+        // Update all program references
+        this.updateProgramReferences(deployedId);
+        
+        // Rebuild with the correct program ID
+        console.log("🔨 Rebuilding program with correct ID...");
+        execSync("anchor build", { stdio: "inherit", cwd: "anchor" });
+        
+        console.log("✅ Program ID mismatch fixed and program rebuilt!");
+        console.log("💡 The program is now consistent and ready for initialization.");
+      } else {
+        console.log("✅ Program ID consistency verified!");
+      }
+    } catch (error) {
+      console.error("❌ Error verifying program ID:", error);
+      console.log("⚠️  You may need to manually check program ID consistency");
+    }
+  }
+
   private async deployProgram(): Promise<boolean> {
     try {
       console.log("\n🚀 Deploying Solana program...\n");
@@ -835,6 +902,9 @@ export type { RecipientFromJson, RecipientsFile } `;
       // Deploy the program
       console.log("📡 Deploying program...");
       execSync("anchor deploy", { stdio: "inherit", cwd: "anchor" });
+      
+      // After deployment, check for program ID mismatch and fix it
+      await this.verifyAndFixProgramId();
       
       console.log("✅ Program deployed successfully!");
       return true;
@@ -905,6 +975,30 @@ export type { RecipientFromJson, RecipientsFile } `;
       console.log("   ANCHOR_WALLET=./deploy-wallet.json \\");
       console.log("   npx ts-node scripts/initialize-airdrop.ts");
       return false;
+    }
+  }
+
+  public async fixProgramIdMismatch(): Promise<void> {
+    try {
+      console.log("🔧 Program ID Mismatch Fixer\n");
+      console.log("This will check and fix any program ID mismatches between:");
+      console.log("- Deployed program keypair");
+      console.log("- Rust source code (declare_id!)");
+      console.log("- Anchor.toml configuration");
+      console.log("- Recipients.json");
+      console.log("- Frontend TypeScript files");
+      console.log("\n" + "=".repeat(50) + "\n");
+      
+      await this.verifyAndFixProgramId();
+      
+      console.log("\n✅ Program ID verification completed!");
+      console.log("💡 You can now run initialization: npm run anchor:init");
+      
+    } catch (error) {
+      console.error("❌ Fix failed:", error);
+      process.exit(1);
+    } finally {
+      this.rl.close();
     }
   }
 
@@ -1038,7 +1132,17 @@ export type { RecipientFromJson, RecipientsFile } `;
 // Run the setup if this file is executed directly
 if (require.main === module) {
   const setup = new SolanaDeploymentSetup();
-  setup.run().catch(console.error);
+  
+  // Check for command line arguments
+  const args = process.argv.slice(2);
+  
+  if (args.includes('--fix-program-id') || args.includes('--fix')) {
+    // Run program ID fixer only
+    setup.fixProgramIdMismatch().catch(console.error);
+  } else {
+    // Run full setup
+    setup.run().catch(console.error);
+  }
 }
 
 export { SolanaDeploymentSetup }; 
