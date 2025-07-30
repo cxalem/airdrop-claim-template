@@ -186,4 +186,4 @@ This project is open source and available under the MIT License.
 
 **Need help?** Check the error messages carefully - they often contain the exact solution! If you're stuck, the most common issues are covered in the troubleshooting section above.
 
-Built with ❤️ using Next.js, TypeScript, Anchor, and Solana
+Built with ❤️ using Next.js, TypeScript, Gill, and Solana
