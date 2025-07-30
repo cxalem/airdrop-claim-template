@@ -7,6 +7,7 @@
     "extract-wallet": "ts-node --project tsconfig.node.json anchor/scripts/extract-wallet.ts",
     "anchor:init:unsafe": "ts-node --project tsconfig.node.json anchor/scripts/initialize-airdrop.ts",
     "anchor:init": "npm run deploy-setup:fix && npm run anchor:init:unsafe",
+    "airdrop:init": "cd anchor && ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=./deploy-wallet.json npx ts-node scripts/initialize-airdrop.ts",
     "anchor:claim": "ts-node --project tsconfig.node.json anchor/scripts/claim-airdrop.ts",
     "anchor:generate-proof": "ts-node --project tsconfig.node.json anchor/scripts/generate-proof.ts",
     "anchor:test": "cd anchor && anchor test",
