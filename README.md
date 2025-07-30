@@ -120,13 +120,13 @@ pnpm deploy-setup
 6. **Updates frontend code** - Automatically updates `src/lib/recipients.ts` with real data
 7. **Deploys Solana program** - Compiles and deploys your airdrop program to devnet
 8. **Updates environment file** - Automatically adds the program ID to `.env.local`
-9. **Initializes airdrop** - Sets up the on-chain airdrop state with Merkle root
+9. **Shows initialization command** - Provides the exact command to initialize the airdrop
 
 **Interactive Prompts:**
 - Choose to use existing wallets or create new ones
 - Decide how many test wallets to create (default: 3)
 - Choose whether to deploy with a new program ID
-- Confirm deployment and initialization
+- Confirm deployment
 
 **Common Errors & Solutions:**
 
@@ -160,14 +160,40 @@ export ANCHOR_WALLET=./deploy-wallet.json
 - **Cause:** Too many faucet requests
 - **Solution:** Wait a few minutes and try again, or fund wallets manually
 
-### Step 4: Verify Setup Success
+### Step 4: Initialize the Airdrop
 
-After the script completes, you should see:
+After successful deployment, you'll see a command to initialize the airdrop:
+
+```bash
+🎯 Now you can cd anchor and run:
+ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
+ANCHOR_WALLET=./deploy-wallet.json \
+npx ts-node scripts/initialize-airdrop.ts
+```
+
+Run this command to set up the on-chain airdrop state:
+
+```bash
+cd anchor
+ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
+ANCHOR_WALLET=./deploy-wallet.json \
+npx ts-node scripts/initialize-airdrop.ts
+```
+
+This step:
+- Sets up the on-chain airdrop state with the Merkle root
+- Configures the total amount and recipient count
+- Makes the airdrop ready for claiming
+
+### Step 5: Verify Setup Success
+
+After the deploy script completes, you should see:
 
 ```
-🎉 Everything is ready! You can now:
-   - Test claiming: npx ts-node scripts/claim-airdrop.ts <pubkey> <secretkey>
-   - Use the frontend to claim airdrops (restart dev server to pick up new env vars)
+🎯 Now you can cd anchor and run:
+ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
+ANCHOR_WALLET=./deploy-wallet.json \
+npx ts-node scripts/initialize-airdrop.ts
 
 📁 Files created/updated:
    - deploy-wallet.json
@@ -177,6 +203,8 @@ After the script completes, you should see:
    - Anchor.toml (updated)
    - .env.local or .env (updated with program ID)
 ```
+
+After running the initialization command, you'll be ready to claim airdrops!
 
 **Verify your setup:**
 ```bash
@@ -190,7 +218,7 @@ cat recipients.json
 solana program show <your-program-id> --url devnet
 ```
 
-### Step 5: Start the Frontend
+### Step 6: Start the Frontend
 
 ```bash
 cd ..  # Back to project root
@@ -204,7 +232,7 @@ Open [http://localhost:3000](http://localhost:3000) - you should see the airdrop
 - **"Program ID not found"**: Restart dev server to pick up new environment variables
 - **TypeScript errors**: Run `pnpm build` to check for issues
 
-### Step 6: Claim Your Airdrop
+### Step 7: Claim Your Airdrop
 
 1. **Open the app** - Go to http://localhost:3000
 2. **Click "Claim Airdrop"** - The button should be enabled
@@ -246,7 +274,9 @@ Open [http://localhost:3000](http://localhost:3000) - you should see the airdrop
   ```bash
   # Re-run initialization if needed
   cd anchor
-  ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=./deploy-wallet.json npx ts-node scripts/initialize-airdrop.ts
+  ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
+  ANCHOR_WALLET=./deploy-wallet.json \
+  npx ts-node scripts/initialize-airdrop.ts
   ```
 
 ## 🧪 Testing with Command Line

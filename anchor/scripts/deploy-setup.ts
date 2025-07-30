@@ -955,40 +955,7 @@ export type { RecipientFromJson, RecipientsFile } `;
     }
   }
 
-  private async initializeAirdrop(): Promise<boolean> {
-    try {
-      console.log("\n🚀 Initializing airdrop on-chain...\n");
-      
-      // Ensure deploy wallet exists and is properly set up
-      await this.ensureDeployWalletFunded();
-      
-      console.log("📤 Running initialization script...");
-      
-      // Set up proper environment variables for Anchor
-      const env = {
-        ...process.env,
-        ANCHOR_PROVIDER_URL: "https://api.devnet.solana.com",
-        ANCHOR_WALLET: "./deploy-wallet.json"
-      };
-      
-      execSync("npx ts-node scripts/initialize-airdrop.ts", { 
-        stdio: "inherit",
-        cwd: "anchor",
-        env
-      });
-      
-      console.log("✅ Airdrop initialized successfully!");
-      return true;
-    } catch (error) {
-      console.error("❌ Airdrop initialization failed:", error);
-      console.log("💡 You can try manually with:");
-      console.log("   cd anchor");
-      console.log("   ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \\");
-      console.log("   ANCHOR_WALLET=./deploy-wallet.json \\");
-      console.log("   npx ts-node scripts/initialize-airdrop.ts");
-      return false;
-    }
-  }
+
 
   public async fixProgramIdMismatch(): Promise<void> {
     try {
@@ -1067,18 +1034,12 @@ export type { RecipientFromJson, RecipientsFile } `;
         this.updateEnvironmentFile(currentProgramId);
       }
 
-      // Step 6: Initialize airdrop after successful deployment
-      let initSuccess = false;
+      // Step 6: Show initialization command
       if (deploySuccess) {
-        const initChoice = await this.question("\nDo you want to initialize the airdrop now? (y/n): ");
-        if (initChoice.toLowerCase() === 'y' || initChoice.toLowerCase() === 'yes') {
-          initSuccess = await this.initializeAirdrop();
-          if (!initSuccess) {
-            console.log("⚠️  Initialization failed. You can try manually with: npx ts-node scripts/initialize-airdrop.ts");
-          }
-        } else {
-          console.log("⏭️  Skipping initialization. You can initialize later with: npx ts-node scripts/initialize-airdrop.ts");
-        }
+        console.log("\n🎯 Now you can cd anchor and run:");
+        console.log("ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \\");
+        console.log("ANCHOR_WALLET=./deploy-wallet.json \\");
+        console.log("npx ts-node scripts/initialize-airdrop.ts");
       }
 
       // Step 7: Final summary
@@ -1100,33 +1061,21 @@ export type { RecipientFromJson, RecipientsFile } `;
       console.log("1. ✅ Merkle tree generated and anchor/recipients.json updated");
       if (deploySuccess) {
         console.log("2. ✅ Program deployed successfully");
-        if (initSuccess) {
-          console.log("3. ✅ Airdrop initialized successfully");
-          console.log("4. 🎯 Ready to test claiming!");
-        } else {
-          console.log("3. ⏭️  Initialize airdrop: npx ts-node scripts/initialize-airdrop.ts");
-        }
+        console.log("3. ⏭️  Initialize airdrop: see command above");
       } else {
         console.log("2. ⏭️  Deploy program: anchor deploy");
         console.log("3. ⏭️  Initialize airdrop: npx ts-node scripts/initialize-airdrop.ts");
       }
       
-      if (deploySuccess && initSuccess) {
-        console.log("\n🎉 Everything is ready! You can now:");
-        console.log("   - Test claiming: npx ts-node scripts/claim-airdrop.ts <pubkey> <secretkey>");
-        console.log("   - Use the frontend to claim airdrops (restart dev server to pick up new env vars)");
+      console.log("\n📋 Next steps:");
+      if (!deploySuccess) {
+        console.log("   1. Deploy program: anchor deploy");
+        console.log("   2. Initialize airdrop: npx ts-node scripts/initialize-airdrop.ts");
+        console.log("   3. Test claiming: npx ts-node scripts/claim-airdrop.ts <pubkey> <secretkey>");
       } else {
-        console.log("\n📋 Next steps:");
-        if (!deploySuccess) {
-          console.log("   1. Deploy program: anchor deploy");
-          console.log("   2. Initialize airdrop: npx ts-node scripts/initialize-airdrop.ts");
-        } else if (!initSuccess) {
-          console.log("   1. Initialize airdrop: npx ts-node scripts/initialize-airdrop.ts");
-        }
+        console.log("   1. Initialize airdrop: see command above");
         console.log("   2. Test claiming: npx ts-node scripts/claim-airdrop.ts <pubkey> <secretkey>");
-        if (deploySuccess) {
-          console.log("   3. Restart your dev server to use the updated program ID");
-        }
+        console.log("   3. Restart your dev server to use the updated program ID");
       }
       
       console.log("\n💡 Wallet information saved in anchor/test-wallets.json");
