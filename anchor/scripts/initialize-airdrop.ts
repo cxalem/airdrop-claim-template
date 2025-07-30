@@ -192,23 +192,56 @@ export async function initializeAirdrop(
     const totalAmount = new anchor.BN(recipientsData.totalAmount);
 
     console.log("📤 Sending initialize transaction...");
-    const tx = await program.methods
-      .initializeAirdrop(Array.from(merkleRootBytes), totalAmount)
-      .accounts({
-        authority: provider.wallet.publicKey,
-      })
-      .rpc();
+    let tx: string;
+    try {
+      tx = await program.methods
+        .initializeAirdrop(Array.from(merkleRootBytes), totalAmount)
+        .accounts({
+          authority: provider.wallet.publicKey,
+        })
+        .rpc();
 
-    console.log("✅ Airdrop initialized successfully!");
-    console.log(`📋 Transaction signature: ${tx}`);
-    console.log(
-      `🔍 View on explorer: https://explorer.solana.com/tx/${tx}?cluster=devnet`
-    );
+      console.log("✅ Transaction sent successfully!");
+      console.log(`📋 Transaction signature: ${tx}`);
+      console.log(
+        `🔍 View on explorer: https://explorer.solana.com/tx/${tx}?cluster=devnet`
+      );
+    } catch (error) {
+      console.error("❌ Failed to send initialization transaction:", error);
+      throw error;
+    }
+
+    // Wait for transaction confirmation
+    console.log("⏳ Waiting for transaction confirmation...");
+    try {
+      const confirmation = await provider.connection.confirmTransaction(tx, 'confirmed');
+      if (confirmation.value.err) {
+        console.error("❌ Transaction failed:", confirmation.value.err);
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+      console.log("✅ Transaction confirmed successfully!");
+    } catch (error) {
+      console.error("❌ Failed to confirm transaction:", error);
+      throw error;
+    }
+
+    // Add a small delay to ensure account is available
+    console.log("⏳ Waiting for account to be available...");
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Verify the state
-    const airdropState = await program.account.airdropState.fetch(
-      airdropStatePda
-    );
+    console.log("🔍 Fetching airdrop state for verification...");
+    let airdropState;
+    try {
+      airdropState = await program.account.airdropState.fetch(
+        airdropStatePda
+      );
+      console.log("✅ Airdrop initialized and verified successfully!");
+    } catch (error) {
+      console.error("❌ Failed to fetch airdrop state after initialization:", error);
+      console.error(`   Expected PDA: ${airdropStatePda.toString()}`);
+      throw error;
+    }
     console.log("\n🔍 Verification:");
     console.log(
       `   Merkle root: 0x${Buffer.from(airdropState.merkleRoot).toString(
