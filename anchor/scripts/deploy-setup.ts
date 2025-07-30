@@ -225,8 +225,8 @@ class SolanaDeploymentSetup {
       const testWalletsData = JSON.parse(fs.readFileSync(testWalletsPath, "utf8"));
       const wallets = testWalletsData.wallets || [];
       
-      const deployWallet = wallets.find((w: any) => w.isDeployWallet || w.name === "deploy-wallet");
-      const testWallets = wallets.filter((w: any) => !w.isDeployWallet && w.name !== "deploy-wallet");
+      const deployWallet = wallets.find((w: WalletInfo) => w.isDeployWallet || w.name === "deploy-wallet");
+      const testWallets = wallets.filter((w: WalletInfo) => !w.isDeployWallet && w.name !== "deploy-wallet");
 
       return { deployWallet, testWallets };
     } catch (error) {
@@ -336,7 +336,7 @@ class SolanaDeploymentSetup {
         };
 
         console.log(`✅ Using existing wallet: ${deployWallet.publicKey}`);
-      } catch (error) {
+      } catch {
         console.error("❌ Invalid private key format. Please try again.");
         process.exit(1);
       }
@@ -478,6 +478,9 @@ class SolanaDeploymentSetup {
   }
 
   private updateAnchorConfig(deployWallet: WalletInfo): void {
+    // Get the current program ID dynamically instead of hardcoding it
+    const currentProgramId = this.getCurrentProgramId();
+    
     const anchorToml = `[toolchain]
 anchor_version = "0.31.1"
 package_manager = "pnpm"
@@ -487,7 +490,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-solana_distributor = "ErbDoJTnJyG6EBXHeFochTsHJhB3Jfjc3MF1L9aNip3y"
+solana_distributor = "${currentProgramId}"
 
 [registry]
 url = "https://api.apr.dev"
@@ -521,7 +524,7 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
     if (fs.existsSync(recipientsPath)) {
       try {
         const existingData = JSON.parse(fs.readFileSync(recipientsPath, "utf8"));
-        const existingPublicKeys = existingData.recipients?.map((r: any) => r.publicKey) || [];
+        const existingPublicKeys = existingData.recipients?.map((r: { publicKey: string }) => r.publicKey) || [];
         const newPublicKeys = recipients.map(r => r.publicKey);
         
         // If the wallets are the same, just update descriptions and keep existing merkle root
@@ -532,7 +535,7 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
           fs.writeFileSync(recipientsPath, JSON.stringify(existingData, null, 2));
           shouldUpdate = false;
         }
-      } catch (error) {
+      } catch {
         // If there's an error reading existing file, proceed with generating new one
       }
     }
@@ -568,7 +571,7 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
       const recipientsData = JSON.parse(fs.readFileSync(recipientsPath, "utf8"));
 
       // Convert to format expected by merkle tree
-      const recipients: Recipient[] = recipientsData.recipients.map((r: any) => ({
+      const recipients: Recipient[] = recipientsData.recipients.map((r: { publicKey: string; amount: string }) => ({
         recipient: new PublicKey(r.publicKey),
         amount: parseInt(r.amount),
       }));
@@ -938,7 +941,7 @@ export type { RecipientFromJson, RecipientsFile } `;
           }
         }
       }
-    } catch (error) {
+    } catch {
       console.log("⚠️  Could not check deploy wallet balance");
     }
   }
