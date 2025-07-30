@@ -92,6 +92,19 @@ export async function initializeAirdrop(
   try {
     console.log("🚀 Initializing airdrop...");
 
+    // Set up proper environment variables for Anchor
+    const env = {
+      ...process.env,
+      ANCHOR_PROVIDER_URL: "https://api.devnet.solana.com",
+      ANCHOR_WALLET: "./deploy-wallet.json"
+    };
+
+    // Apply environment variables to current process
+    Object.assign(process.env, env);
+    
+    console.log("📡 Using devnet endpoint:", env.ANCHOR_PROVIDER_URL);
+    console.log("👛 Using wallet:", env.ANCHOR_WALLET);
+
     // Load recipients data
     const recipientsData = loadRecipients(recipientsFile);
     console.log(`📋 Loaded ${recipientsData.recipients.length} recipients`);
