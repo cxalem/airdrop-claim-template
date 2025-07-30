@@ -2,7 +2,6 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SolanaDistributor } from "../target/types/solana_distributor";
 import { PublicKey, Connection, Keypair } from "@solana/web3.js";
-import { loadRecipients } from "./load-recipients";
 import { execSync } from "child_process";
 import * as fs from "fs";
 
@@ -120,7 +119,7 @@ export async function initializeAirdrop(
     console.log("👛 Using wallet:", WALLET_PATH);
 
     // Load recipients data
-    const recipientsData = loadRecipients(recipientsFile);
+    const recipientsData = JSON.parse(fs.readFileSync(recipientsFile, "utf8"));
     console.log(`📋 Loaded ${recipientsData.recipients.length} recipients`);
     console.log(
       `💰 Total amount: ${parseInt(recipientsData.totalAmount) / 1e9} SOL`

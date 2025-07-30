@@ -1071,15 +1071,15 @@ export type { RecipientFromJson, RecipientsFile } `;
       if (!deploySuccess) {
         console.log("   1. Deploy program: anchor deploy");
         console.log("   2. Initialize airdrop: npx ts-node scripts/initialize-airdrop.ts");
-        console.log("   3. Test claiming: npx ts-node scripts/claim-airdrop.ts <pubkey> <secretkey>");
+        console.log("   3. Test claiming: Use the frontend at http://localhost:3000");
       } else {
         console.log("   1. Initialize airdrop: see command above");
-        console.log("   2. Test claiming: npx ts-node scripts/claim-airdrop.ts <pubkey> <secretkey>");
+        console.log("   2. Test claiming: Use the frontend at http://localhost:3000");
         console.log("   3. Restart your dev server to use the updated program ID");
       }
       
       console.log("\n💡 Wallet information saved in anchor/test-wallets.json");
-      console.log("   Use 'npx ts-node scripts/extract-private-keys.ts' to view keys");
+      console.log("   Use 'cat anchor/test-wallets.json' to view wallet details");
 
     } catch (error) {
       console.error("❌ Setup failed:", error);
