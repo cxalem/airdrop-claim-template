@@ -3,6 +3,87 @@ import { Program } from "@coral-xyz/anchor";
 import { SolanaDistributor } from "../target/types/solana_distributor";
 import { PublicKey } from "@solana/web3.js";
 import { loadRecipients } from "./load-recipients";
+import { execSync } from "child_process";
+import * as fs from "fs";
+
+// Auto-fix functionality
+async function autoFixCommonIssues(): Promise<boolean> {
+  console.log("🔧 Checking for common issues and auto-fixing...");
+  
+  let fixesApplied = false;
+  
+  try {
+    // Check 1: Missing TypeScript types
+    const typesPath = "target/types/solana_distributor.ts";
+    if (!fs.existsSync(typesPath)) {
+      console.log("⚠️  Missing TypeScript types, generating...");
+      execSync("anchor idl type target/idl/solana_distributor.json -o target/types/solana_distributor.ts", { stdio: "inherit" });
+      console.log("✅ TypeScript types generated");
+      fixesApplied = true;
+    }
+    
+    // Check 2: Missing IDL file
+    const idlPath = "target/idl/solana_distributor.json";
+    if (!fs.existsSync(idlPath)) {
+      console.log("⚠️  Missing IDL file, rebuilding...");
+      execSync("anchor build", { stdio: "inherit" });
+      execSync("anchor idl type target/idl/solana_distributor.json -o target/types/solana_distributor.ts", { stdio: "inherit" });
+      console.log("✅ IDL and types generated");
+      fixesApplied = true;
+    }
+    
+    // Check 3: Program ID consistency
+    const declaredId = getDeclaredProgramId();
+    const deployedId = getDeployedProgramId();
+    
+    if (declaredId && deployedId && declaredId !== deployedId) {
+      console.log("⚠️  Program ID mismatch detected!");
+      console.log(`   Declared: ${declaredId}`);
+      console.log(`   Deployed: ${deployedId}`);
+      console.log("🔄 Redeploying program to fix mismatch...");
+      
+      execSync("anchor build", { stdio: "inherit" });
+      execSync("anchor deploy", { stdio: "inherit" });
+      console.log("✅ Program redeployed successfully");
+      fixesApplied = true;
+    }
+    
+    if (fixesApplied) {
+      console.log("✅ Auto-fixes applied successfully!");
+      return true;
+    } else {
+      console.log("✅ No issues detected");
+      return false;
+    }
+    
+  } catch (error) {
+    console.error("❌ Error during auto-fix:", error);
+    console.log("💡 You may need to manually run:");
+    console.log("   1. anchor clean && anchor build");
+    console.log("   2. anchor deploy");
+    console.log("   3. anchor idl type target/idl/solana_distributor.json -o target/types/solana_distributor.ts");
+    return false;
+  }
+}
+
+function getDeclaredProgramId(): string | null {
+  try {
+    const libContent = fs.readFileSync("programs/solana-distributor/src/lib.rs", "utf8");
+    const match = libContent.match(/declare_id!\("([^"]+)"\);/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function getDeployedProgramId(): string | null {
+  try {
+    const output = execSync("solana address -k target/deploy/solana_distributor-keypair.json", { encoding: "utf8" });
+    return output.trim();
+  } catch {
+    return null;
+  }
+}
 
 // Initialize the airdrop with recipients data
 export async function initializeAirdrop(
@@ -63,7 +144,7 @@ export async function initializeAirdrop(
         signature: null,
         alreadyInitialized: true,
       };
-    } catch (e) {
+    } catch {
       // Not initialized yet, continue
       console.log("✅ Airdrop not yet initialized, proceeding...");
     }
@@ -110,6 +191,31 @@ export async function initializeAirdrop(
     };
   } catch (error) {
     console.error("❌ Error initializing airdrop:", error);
+    
+    // Check if this is a common issue we can auto-fix
+    if (error.message?.includes("Cannot find module") || 
+        error.message?.includes("DeclaredProgramIdMismatch") ||
+        error.message?.includes("AccountNotInitialized")) {
+      
+      console.log("\n🔧 Attempting to auto-fix common issues...");
+      const fixesApplied = await autoFixCommonIssues();
+      
+      if (fixesApplied) {
+        console.log("\n🔄 Retrying airdrop initialization after fixes...");
+        
+        // Wait a moment for changes to take effect
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Retry once
+        try {
+          return await initializeAirdrop(recipientsFile);
+        } catch (retryError) {
+          console.error("❌ Retry failed:", retryError);
+          throw retryError;
+        }
+      }
+    }
+    
     throw error;
   }
 }
