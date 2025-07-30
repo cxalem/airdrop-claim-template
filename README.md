@@ -94,7 +94,6 @@ cat ~/.config/solana/id.json  # Shows the keypair array
 This is the magic command that sets everything up:
 
 ```bash
-cd anchor
 pnpm deploy-setup
 ```
 
