@@ -1,10 +1,14 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SolanaDistributor } from "../target/types/solana_distributor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Connection, Keypair } from "@solana/web3.js";
 import { loadRecipients } from "./load-recipients";
 import { execSync } from "child_process";
 import * as fs from "fs";
+
+// Constants for Anchor configuration
+const PROVIDER_URL = "https://api.devnet.solana.com";
+const WALLET_PATH = "./deploy-wallet.json";
 
 // Auto-fix functionality
 async function autoFixCommonIssues(): Promise<boolean> {
@@ -112,18 +116,8 @@ export async function initializeAirdrop(
       await autoFixCommonIssues();
     }
 
-    // Set up proper environment variables for Anchor
-    const env = {
-      ...process.env,
-      ANCHOR_PROVIDER_URL: "https://api.devnet.solana.com",
-      ANCHOR_WALLET: "./deploy-wallet.json"
-    };
-
-    // Apply environment variables to current process
-    Object.assign(process.env, env);
-    
-    console.log("📡 Using devnet endpoint:", env.ANCHOR_PROVIDER_URL);
-    console.log("👛 Using wallet:", env.ANCHOR_WALLET);
+    console.log("📡 Using devnet endpoint:", PROVIDER_URL);
+    console.log("👛 Using wallet:", WALLET_PATH);
 
     // Load recipients data
     const recipientsData = loadRecipients(recipientsFile);
@@ -133,8 +127,20 @@ export async function initializeAirdrop(
     );
     console.log(`🌳 Merkle root: ${recipientsData.merkleRoot}`);
 
-    // Set up Anchor
-    const provider = anchor.AnchorProvider.env();
+    // Set up Anchor provider with hardcoded configuration
+    console.log("📡 Creating provider with explicit configuration...");
+    const connection = new Connection(PROVIDER_URL);
+    
+    // Load wallet keypair
+    const walletKeypair = Keypair.fromSecretKey(
+      new Uint8Array(JSON.parse(fs.readFileSync(WALLET_PATH, 'utf8')))
+    );
+    const wallet = new anchor.Wallet(walletKeypair);
+    
+    const provider = new anchor.AnchorProvider(connection, wallet, {
+      commitment: 'confirmed'
+    });
+    
     anchor.setProvider(provider);
 
     const program = anchor.workspace
