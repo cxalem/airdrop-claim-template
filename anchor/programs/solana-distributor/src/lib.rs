@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::keccak;
 
-declare_id!("2KP1tES7htR1KGUuCQJPUbBhWrPAQtgyYAWrVenfYmN2");
+declare_id!("111111111111111111111111111111111111");
 
 #[program]
 pub mod solana_distributor {
