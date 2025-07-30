@@ -169,22 +169,6 @@ pnpm anchor:test
 └── .env.local                     # 🔄 Auto-updated environment config
 ```
 
-## 🚀 Going to Production
-
-1. **Deploy to mainnet**: Change network configurations (⚠️ expensive!)
-2. **Update recipient data**: Replace test wallets with real recipient addresses
-3. **Secure private keys**: Use proper key management (never in environment files)
-4. **Test thoroughly**: Test on devnet first, then mainnet with small amounts
-5. **Monitor costs**: Solana mainnet transactions cost real money
-
-## 💡 Tips for Success
-
-- **Start simple**: Use the exact setup process above before customizing
-- **Test everything**: Claim airdrops on devnet before going live
-- **Keep backups**: Save your deploy wallet and program keypairs safely
-- **Monitor resources**: Keep an eye on SOL balances for deployment and fees
-- **Read error messages**: Most errors have clear solutions in the logs
-
 ## 🤝 Contributing
 
 Found an issue or want to improve the template?
