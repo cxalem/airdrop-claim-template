@@ -9,37 +9,23 @@ console.log("==========================================\n");
 // Auto-fix functionality
 async function autoFixCommonIssues(): Promise<boolean> {
   console.log("🔍 Checking for common issues and auto-fixing...");
-  
   let fixesApplied = false;
   
   try {
-    // Check 1: Missing TypeScript types
-    const typesPath = "target/types/solana_distributor.ts";
-    if (!fs.existsSync(typesPath)) {
-      console.log("⚠️  Missing TypeScript types, generating...");
-      
-      // First ensure IDL exists
-      const idlPath = "target/idl/solana_distributor.json";
-      if (!fs.existsSync(idlPath)) {
-        console.log("📋 IDL missing, building first...");
-        execSync("anchor build", { stdio: "inherit" });
-      }
-      
-      execSync("anchor idl type target/idl/solana_distributor.json -o target/types/solana_distributor.ts", { stdio: "inherit" });
-      console.log("✅ TypeScript types generated");
-      fixesApplied = true;
+    // Check 1: Missing wallet files
+    if (!fs.existsSync("deploy-wallet.json")) {
+      console.log("⚠️  Missing deploy-wallet.json");
+      console.log("💡 Please run: npm run deploy-setup");
+      return false;
     }
-    
-    // Check 2: Missing IDL file
-    const idlPath = "target/idl/solana_distributor.json";
-    if (!fs.existsSync(idlPath)) {
-      console.log("⚠️  Missing IDL file, rebuilding...");
-      execSync("anchor build", { stdio: "inherit" });
-      execSync("anchor idl type target/idl/solana_distributor.json -o target/types/solana_distributor.ts", { stdio: "inherit" });
-      console.log("✅ IDL and types generated");
-      fixesApplied = true;
+
+    // Check 2: Missing recipients file
+    if (!fs.existsSync("recipients.json")) {
+      console.log("⚠️  Missing recipients.json");
+      console.log("💡 Please run: npm run deploy-setup");
+      return false;
     }
-    
+
     // Check 3: Program ID consistency
     const declaredId = getDeclaredProgramId();
     const deployedId = getDeployedProgramId();
@@ -47,19 +33,31 @@ async function autoFixCommonIssues(): Promise<boolean> {
     console.log(`📋 Declared program ID: ${declaredId || 'Not found'}`);
     console.log(`📍 Deployed program ID: ${deployedId || 'Not found'}`);
     
-    if (declaredId && deployedId && declaredId !== deployedId) {
-      console.log("⚠️  Program ID mismatch detected!");
-      console.log("🔄 Redeploying program to fix mismatch...");
-      
-      execSync("anchor build", { stdio: "inherit" });
-      execSync("anchor deploy", { stdio: "inherit" });
-      console.log("✅ Program redeployed successfully");
-      fixesApplied = true;
-    } else if (!deployedId) {
+    if (!deployedId) {
       console.log("⚠️  Program not deployed yet, deploying...");
+      execSync("anchor clean", { stdio: "inherit" });
       execSync("anchor build", { stdio: "inherit" });
       execSync("anchor deploy", { stdio: "inherit" });
       console.log("✅ Program deployed successfully");
+      fixesApplied = true;
+    } else if (declaredId && deployedId && declaredId !== deployedId) {
+      console.log("⚠️  Program ID mismatch detected!");
+      console.log("🔧 Fixing program ID mismatch...");
+      
+      // Use the deploy-setup script's fix functionality
+      execSync("npx ts-node scripts/deploy-setup.ts --fix-program-id", { 
+        stdio: "inherit",
+        cwd: process.cwd()
+      });
+      
+      console.log("✅ Program ID mismatch fixed");
+      fixesApplied = true;
+    } else {
+      // Even if everything looks good, ensure we have a clean build
+      console.log("🔄 Ensuring clean build...");
+      execSync("anchor clean", { stdio: "inherit" });
+      execSync("anchor build", { stdio: "inherit" });
+      console.log("✅ Clean build completed");
       fixesApplied = true;
     }
     
@@ -84,9 +82,9 @@ async function autoFixCommonIssues(): Promise<boolean> {
   } catch (error) {
     console.error("❌ Error during auto-fix:", error);
     console.log("\n💡 You may need to manually run:");
-    console.log("   1. anchor clean && anchor build");
-    console.log("   2. anchor deploy");
-    console.log("   3. anchor idl type target/idl/solana_distributor.json -o target/types/solana_distributor.ts");
+    console.log("   1. npm run deploy-setup:fix");
+    console.log("   2. anchor clean && anchor build");
+    console.log("   3. anchor deploy");
     return false;
   }
 }

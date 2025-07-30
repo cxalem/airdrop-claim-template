@@ -193,9 +193,10 @@ export async function initializeAirdrop(
     console.error("❌ Error initializing airdrop:", error);
     
     // Check if this is a common issue we can auto-fix
-    if (error.message?.includes("Cannot find module") || 
+        if (error instanceof Error && (
+        error.message?.includes("Cannot find module") ||
         error.message?.includes("DeclaredProgramIdMismatch") ||
-        error.message?.includes("AccountNotInitialized")) {
+        error.message?.includes("AccountNotInitialized"))) {
       
       console.log("\n🔧 Attempting to auto-fix common issues...");
       const fixesApplied = await autoFixCommonIssues();

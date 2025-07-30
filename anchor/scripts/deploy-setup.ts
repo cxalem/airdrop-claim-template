@@ -856,7 +856,10 @@ export type { RecipientFromJson, RecipientsFile } `;
         // Update all program references
         this.updateProgramReferences(deployedId);
         
-        // Rebuild with the correct program ID
+        // Clean and rebuild with the correct program ID to ensure it's compiled into the binary
+        console.log("🧹 Cleaning previous builds...");
+        execSync("anchor clean", { stdio: "inherit", cwd: "anchor" });
+        
         console.log("🔨 Rebuilding program with correct ID...");
         execSync("anchor build", { stdio: "inherit", cwd: "anchor" });
         
@@ -864,6 +867,12 @@ export type { RecipientFromJson, RecipientsFile } `;
         console.log("💡 The program is now consistent and ready for initialization.");
       } else {
         console.log("✅ Program ID consistency verified!");
+        
+        // Even if IDs match, do a clean rebuild to ensure the binary is consistent
+        console.log("🔄 Ensuring clean build with current program ID...");
+        execSync("anchor clean", { stdio: "inherit", cwd: "anchor" });
+        execSync("anchor build", { stdio: "inherit", cwd: "anchor" });
+        console.log("✅ Clean rebuild completed!");
       }
     } catch (error) {
       console.error("❌ Error verifying program ID:", error);
