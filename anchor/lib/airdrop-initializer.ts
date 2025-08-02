@@ -366,3 +366,11 @@ export class AirdropInitializer {
     }
   }
 }
+
+/**
+ * Initialize the airdrop using the new simplified architecture
+ */
+export async function initializeAirdrop(recipientsFile: string = "recipients.json") {
+  const initializer = new AirdropInitializer("https://api.devnet.solana.com", "./deploy-wallet.json", ".");
+  return await initializer.initializeAirdrop(recipientsFile);
+}

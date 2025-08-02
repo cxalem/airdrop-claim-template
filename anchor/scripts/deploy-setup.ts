@@ -67,7 +67,7 @@ class SolanaDeploymentSetup {
         deployWallet = this.walletManager.createWalletFromKey("deploy-wallet", privateKeyInput);
         deployWallet.isDeployWallet = true;
         console.log(`✅ Using existing wallet: ${deployWallet.publicKey}`);
-      } catch (error) {
+      } catch {
         console.error("❌ Invalid private key format. Please try again.");
         process.exit(1);
       }
@@ -184,7 +184,13 @@ class SolanaDeploymentSetup {
   /**
    * Show final summary of what was accomplished
    */
-  private showFinalSummary(result: any, deploymentAttempted: boolean): void {
+  private showFinalSummary(result: {
+    success: boolean;
+    deployWallet?: WalletInfo;
+    testWallets?: WalletInfo[];
+    programId?: string;
+    error?: string;
+  }, deploymentAttempted: boolean): void {
     console.log("\n" + "=".repeat(50));
     console.log("✅ Setup completed successfully!\n");
     
@@ -260,22 +266,6 @@ class SolanaDeploymentSetup {
     } finally {
       this.rl.close();
     }
-  }
-}
-
-// Run the setup if this file is executed directly
-if (require.main === module) {
-  const setup = new SolanaDeploymentSetup();
-  
-  // Check for command line arguments
-  const args = process.argv.slice(2);
-  
-  if (args.includes('--fix-program-id') || args.includes('--fix')) {
-    // Run program ID fixer only
-    setup.fixProgramIdMismatch().catch(console.error);
-  } else {
-    // Run full setup
-    setup.run().catch(console.error);
   }
 }
 

@@ -2,8 +2,9 @@
   "name": "airdrop-claim-template",
   "scripts": {
     "build": "next build",
-    "airdrop:setup": "cd anchor && npx ts-node scripts/deploy-setup.ts",
-    "airdrop:init": "cd anchor && ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=./deploy-wallet.json npx ts-node scripts/initialize-airdrop.ts",
+    "airdrop:setup": "cd anchor && npx ts-node scripts/index.ts setup",
+    "airdrop:init": "cd anchor && npx ts-node scripts/index.ts initialize",
+    "airdrop:fix": "cd anchor && npx ts-node scripts/index.ts fix-program-id",
     "ci": "npm run build && npm run lint && npm run format:check",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",

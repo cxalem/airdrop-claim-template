@@ -1,12 +1,4 @@
-import { AirdropInitializer } from "../lib/airdrop-initializer";
-
-/**
- * Initialize the airdrop using the new simplified architecture
- */
-export async function initializeAirdrop(recipientsFile: string = "recipients.json") {
-  const initializer = new AirdropInitializer("https://api.devnet.solana.com", "./deploy-wallet.json", ".");
-  return await initializer.initializeAirdrop(recipientsFile);
-}
+import { initializeAirdrop } from "../lib/airdrop-initializer";
 
 // Script execution
 async function main() {
@@ -38,7 +30,4 @@ async function main() {
   }
 }
 
-// Run if this file is executed directly
-if (require.main === module) {
-  main();
-}
+main();
