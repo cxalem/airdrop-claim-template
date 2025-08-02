@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { WalletInfo, RecipientFromJson, RecipientsFile } from "./types";
+import type { WalletInfo, RecipientsFile } from "./types";
 
 /**
  * Manages file operations: config updates, recipients generation, environment files
