@@ -121,7 +121,7 @@ test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
    */
   updateRecipientsTypeScript(): void {
     try {
-      console.log("📝 Updating src/lib/recipients.ts...");
+      console.log("📝 Updating ../src/lib/recipients.ts...");
       
       // Read the generated recipients.json
       const recipientsPath = `${this.workingDir}/recipients.json`;
@@ -175,17 +175,17 @@ export const RECIPIENTS_DATA: RecipientsFile = ${JSON.stringify(recipientsData, 
 export type { RecipientFromJson, RecipientsFile } `;
       
       // Write to the TypeScript file
-      const recipientsTsPath = "src/lib/recipients.ts";
+      const recipientsTsPath = "../src/lib/recipients.ts";
       if (!fs.existsSync(path.dirname(recipientsTsPath))) {
         fs.mkdirSync(path.dirname(recipientsTsPath), { recursive: true });
       }
       
       fs.writeFileSync(recipientsTsPath, tsContent);
-      console.log("   ✅ Updated src/lib/recipients.ts with generated data");
+      console.log("   ✅ Updated ../src/lib/recipients.ts with generated data");
       
     } catch (error) {
       console.error("❌ Error updating recipients TypeScript file:", error);
-      console.log("⚠️  You may need to manually update src/lib/recipients.ts");
+      console.log("⚠️  You may need to manually update ../src/lib/recipients.ts");
     }
   }
 
