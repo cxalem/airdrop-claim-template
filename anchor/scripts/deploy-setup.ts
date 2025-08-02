@@ -192,7 +192,7 @@ class SolanaDeploymentSetup {
     console.log("   - anchor/deploy-wallet.json");
     console.log("   - anchor/test-wallets.json");
     console.log("   - anchor/recipients.json");
-    console.log("   - src/lib/recipients.ts");
+          console.log("   - ../src/lib/recipients.ts");
     console.log("   - anchor/Anchor.toml");
     
     if (deploymentAttempted && result.programId) {
