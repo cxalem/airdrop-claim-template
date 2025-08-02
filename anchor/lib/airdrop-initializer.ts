@@ -5,7 +5,7 @@ import * as fs from "fs";
 import { BuildCoordinator } from "./build-coordinator";
 import { FileManager } from "./file-manager";
 import type { InitializationResult, RecipientsFile } from "./types";
-import { SolanaDistributor } from "../target/types/solana_distributor";
+// Note: SolanaDistributor type will be loaded dynamically if needed
 
 /**
  * Handles airdrop initialization with minimal redundant operations
@@ -96,7 +96,7 @@ export class AirdropInitializer {
         if (!fs.existsSync(typesPath)) {
           console.log("📝 Generating TypeScript types...");
           try {
-            const { execSync } = require("child_process");
+            const { execSync } = await import("child_process");
             execSync("anchor idl type target/idl/solana_distributor.json -o target/types/solana_distributor.ts", { 
               stdio: "inherit",
               cwd: this.buildCoordinator['workingDir']
@@ -132,6 +132,8 @@ export class AirdropInitializer {
           error: "Failed to fix pre-requisite issues"
         };
       }
+
+
 
       // Step 2: Load recipients data
       const recipientsPath = recipientsFile || "recipients.json";
@@ -169,9 +171,9 @@ export class AirdropInitializer {
       anchor.setProvider(provider);
 
       // Load the program with proper typing
-      let program: Program<SolanaDistributor>;
+      let program: Program;
       try {
-        program = anchor.workspace.SolanaDistributor as Program<SolanaDistributor>;
+        program = anchor.workspace.SolanaDistributor as Program;
         
         if (!program) {
           throw new Error("Program not found in workspace");
@@ -205,7 +207,7 @@ export class AirdropInitializer {
       }
 
       // Step 5: Calculate airdrop state PDA
-      const [airdropStatePda, bump] = PublicKey.findProgramAddressSync(
+      const [airdropStatePda] = PublicKey.findProgramAddressSync(
         [Buffer.from("merkle_tree")],
         program.programId
       );
@@ -213,7 +215,7 @@ export class AirdropInitializer {
 
       // Step 6: Check if already initialized
       try {
-        const existingState = await program.account.airdropState.fetch(airdropStatePda);
+        const existingState = await program.account['airdropState'].fetch(airdropStatePda);
         console.log("⚠️  Airdrop already initialized:");
         console.log(`   Root: 0x${Buffer.from(existingState.merkleRoot).toString("hex")}`);
         console.log(`   Amount: ${existingState.airdropAmount.toNumber() / 1e9} SOL`);
@@ -249,10 +251,46 @@ export class AirdropInitializer {
         console.log(`📋 Transaction signature: ${signature}`);
         console.log(`🔍 View on explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
       } catch (error) {
-        return {
-          success: false,
-          error: `Failed to send initialization transaction: ${error}`
-        };
+        // Check if this is a DeclaredProgramIdMismatch error
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes("DeclaredProgramIdMismatch")) {
+          console.log("⚠️  Program ID mismatch detected, attempting fresh deployment...");
+          
+          try {
+            // Deploy fresh program
+            const deployResult = await this.buildCoordinator.deployProgram();
+            if (!deployResult.success) {
+              return {
+                success: false,
+                error: `Fresh deployment failed: ${deployResult.error}`
+              };
+            }
+            
+            console.log("✅ Fresh deployment completed, retrying initialization...");
+            
+            // Retry the transaction
+            signature = await program.methods
+              .initializeAirdrop(Array.from(merkleRootBytes), totalAmount)
+              .accounts({
+                authority: provider.wallet.publicKey,
+              })
+              .rpc();
+
+            console.log("✅ Transaction sent successfully after retry!");
+            console.log(`📋 Transaction signature: ${signature}`);
+            console.log(`🔍 View on explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+          } catch (retryError) {
+            return {
+              success: false,
+              error: `Failed to initialize after fresh deployment: ${retryError}`
+            };
+          }
+        } else {
+          return {
+            success: false,
+            error: `Failed to send initialization transaction: ${error}`
+          };
+        }
       }
 
       // Step 8: Wait for confirmation
@@ -282,7 +320,7 @@ export class AirdropInitializer {
       
       while (verificationAttempts < maxAttempts) {
         try {
-          const airdropState = await program.account.airdropState.fetch(airdropStatePda);
+          const airdropState = await program.account['airdropState'].fetch(airdropStatePda);
           console.log("✅ Airdrop initialized and verified successfully!");
           console.log(`   Merkle root: 0x${Buffer.from(airdropState.merkleRoot).toString("hex")}`);
           console.log(`   Total amount: ${airdropState.airdropAmount.toNumber() / 1e9} SOL`);
@@ -293,7 +331,7 @@ export class AirdropInitializer {
             signature,
             alreadyInitialized: false
           };
-        } catch (error) {
+        } catch {
           verificationAttempts++;
           if (verificationAttempts >= maxAttempts) {
             console.log("⚠️  Verification failed, but initialization likely succeeded");
