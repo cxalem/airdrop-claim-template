@@ -1,17 +1,6 @@
 #!/usr/bin/env ts-node
 
-import * as fs from "fs";
-
-interface WalletInfo {
-  name: string;
-  publicKey: string;
-  keypairFile: string;
-  secretKey: {
-    hex: string;
-    base58: string;
-    array: number[];
-  };
-}
+import { WalletManager } from "../lib/wallet-manager";
 
 /**
  * Extract a specific wallet file from test-wallets.json
@@ -19,35 +8,8 @@ interface WalletInfo {
  * @param outputPath Optional output path, defaults to the wallet's keypairFile
  */
 export function extractWallet(walletName: string, outputPath?: string): boolean {
-  try {
-    if (!fs.existsSync("test-wallets.json")) {
-      console.error("❌ test-wallets.json not found");
-      return false;
-    }
-
-    const testWalletsData = JSON.parse(fs.readFileSync("test-wallets.json", "utf8"));
-    const wallets: WalletInfo[] = testWalletsData.wallets || [];
-    
-    const wallet = wallets.find((w: WalletInfo) => w.name === walletName);
-    
-    if (!wallet) {
-      console.error(`❌ Wallet "${walletName}" not found in test-wallets.json`);
-      console.log("Available wallets:");
-      wallets.forEach(w => console.log(`  - ${w.name}: ${w.publicKey}`));
-      return false;
-    }
-
-    const outputFile = outputPath || wallet.keypairFile;
-    fs.writeFileSync(outputFile, JSON.stringify(wallet.secretKey.array));
-    
-    console.log(`✅ Extracted ${walletName} to ${outputFile}`);
-    console.log(`   Public Key: ${wallet.publicKey}`);
-    
-    return true;
-  } catch (error) {
-    console.error("❌ Error extracting wallet:", error);
-    return false;
-  }
+  const walletManager = new WalletManager();
+  return walletManager.extractWallet(walletName, outputPath, "test-wallets.json");
 }
 
 /**
@@ -55,23 +17,24 @@ export function extractWallet(walletName: string, outputPath?: string): boolean 
  */
 export function extractAllWallets(): boolean {
   try {
-    if (!fs.existsSync("test-wallets.json")) {
-      console.error("❌ test-wallets.json not found");
+    const walletManager = new WalletManager();
+    const { deployWallet, testWallets } = walletManager.loadExistingWallets("test-wallets.json");
+    
+    const allWallets = deployWallet ? [deployWallet, ...testWallets] : testWallets;
+    
+    if (allWallets.length === 0) {
+      console.error("❌ No wallets found in test-wallets.json");
       return false;
     }
-
-    const testWalletsData = JSON.parse(fs.readFileSync("test-wallets.json", "utf8"));
-    const wallets: WalletInfo[] = testWalletsData.wallets || [];
     
-    console.log(`🔧 Extracting ${wallets.length} wallets...`);
+    console.log(`🔧 Extracting ${allWallets.length} wallets...`);
     
     let success = true;
-    for (const wallet of wallets) {
-      try {
-        fs.writeFileSync(wallet.keypairFile, JSON.stringify(wallet.secretKey.array));
+    for (const wallet of allWallets) {
+      if (walletManager.extractWallet(wallet.name, undefined, "test-wallets.json")) {
         console.log(`✅ ${wallet.name} → ${wallet.keypairFile}`);
-      } catch (error) {
-        console.error(`❌ Failed to extract ${wallet.name}:`, error);
+      } else {
+        console.error(`❌ Failed to extract ${wallet.name}`);
         success = false;
       }
     }
@@ -88,20 +51,23 @@ export function extractAllWallets(): boolean {
  */
 export function listWallets(): void {
   try {
-    if (!fs.existsSync("test-wallets.json")) {
-      console.error("❌ test-wallets.json not found");
+    const walletManager = new WalletManager();
+    const { deployWallet, testWallets } = walletManager.loadExistingWallets("test-wallets.json");
+    
+    const allWallets = deployWallet ? [deployWallet, ...testWallets] : testWallets;
+    
+    if (allWallets.length === 0) {
+      console.error("❌ No wallets found in test-wallets.json");
       return;
     }
-
-    const testWalletsData = JSON.parse(fs.readFileSync("test-wallets.json", "utf8"));
-    const wallets: WalletInfo[] = testWalletsData.wallets || [];
     
-    console.log(`📋 Available wallets (${wallets.length}):`);
-    wallets.forEach((wallet, i) => {
-      const status = wallet.name === "deploy-wallet" ? "🔑 Deploy" : "🧪 Test";
+    console.log(`📋 Available wallets (${allWallets.length}):`);
+    allWallets.forEach((wallet, i) => {
+      const status = wallet.isDeployWallet || wallet.name === "deploy-wallet" ? "🔑 Deploy" : "🧪 Test";
       console.log(`  ${i + 1}. ${status} - ${wallet.name}`);
       console.log(`     Public Key: ${wallet.publicKey}`);
       console.log(`     Keypair File: ${wallet.keypairFile}`);
+      console.log(`     Balance: ${wallet.balance || 'Unknown'}`);
       console.log("");
     });
   } catch (error) {
@@ -109,8 +75,8 @@ export function listWallets(): void {
   }
 }
 
-// Command line interface
-if (require.main === module) {
+// Script execution
+async function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0) {
@@ -129,15 +95,25 @@ if (require.main === module) {
   
   const command = args[0];
   
-  if (command === "--list") {
-    listWallets();
-  } else if (command === "--all") {
-    const success = extractAllWallets();
-    process.exit(success ? 0 : 1);
-  } else {
-    const walletName = command;
-    const outputPath = args[1]; // Optional
-    const success = extractWallet(walletName, outputPath);
-    process.exit(success ? 0 : 1);
+  try {
+    if (command === "--list") {
+      listWallets();
+    } else if (command === "--all") {
+      const success = extractAllWallets();
+      process.exit(success ? 0 : 1);
+    } else {
+      const walletName = command;
+      const outputPath = args[1]; // Optional
+      const success = extractWallet(walletName, outputPath);
+      process.exit(success ? 0 : 1);
+    }
+  } catch (error) {
+    console.error("❌ Error:", error);
+    process.exit(1);
   }
+}
+
+// Run if this file is executed directly
+if (require.main === module) {
+  main();
 } 
