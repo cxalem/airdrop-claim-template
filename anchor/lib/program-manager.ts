@@ -1,11 +1,10 @@
 import { execSync } from "child_process";
-import { Keypair } from "@solana/web3.js";
 import * as fs from "fs";
 import { BuildCoordinator } from "./build-coordinator";
 import { WalletManager } from "./wallet-manager";
 import { FileManager } from "./file-manager";
 import { MerkleTreeManager } from "./merkle-tree-manager";
-import type { WalletInfo, DeploymentResult, InitializationResult } from "./types";
+import type { WalletInfo, DeploymentResult } from "./types";
 
 /**
  * High-level program management that coordinates all deployment operations
