@@ -5,6 +5,9 @@
     "airdrop:setup": "cd anchor && npx ts-node scripts/index.ts setup",
     "airdrop:init": "cd anchor && npx ts-node scripts/index.ts initialize",
     "airdrop:fix": "cd anchor && npx ts-node scripts/index.ts fix-program-id",
+    "test": "cd anchor && vitest run",
+    "test:watch": "cd anchor && vitest",
+    "test:anchor": "cd anchor && anchor test",
     "ci": "npm run build && npm run lint && npm run format:check",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
@@ -53,12 +56,8 @@
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",
     "@types/bn.js": "^5.1.0",
-    "@types/chai": "^4.3.0",
-    "@types/mocha": "^9.0.0",
-    "chai": "^4.3.4",
     "ts-node": "^10.9.2",
-    "mocha": "^9.0.3",
-    "ts-mocha": "^10.0.0",
+    "vitest": "^2.1.8",
     "ws": "^8.18.3"
   }
 }

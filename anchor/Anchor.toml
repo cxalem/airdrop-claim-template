@@ -7,7 +7,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-solana_distributor = "2KP1tES7htR1KGUuCQJPUbBhWrPAQtgyYAWrVenfYmN2"
+solana_distributor = "6Gs656WdKHM2XuZU3CZQ7SJNo63FecawsLECE6wFnozT"
 
 [registry]
 url = "https://api.apr.dev"
@@ -17,4 +17,4 @@ cluster = "devnet"
 wallet = "deploy-wallet.json"
 
 [scripts]
-test = "pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "pnpm exec vitest run"
