@@ -57,3 +57,5 @@ test-ledger
 test-wallet-*.json
 test-wallets.json
 
+anchor/generated/**
+
