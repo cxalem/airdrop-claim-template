@@ -58,4 +58,5 @@ test-wallet-*.json
 test-wallets.json
 
 anchor/generated/**
+anchor/deploy-wallet.json
 

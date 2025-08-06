@@ -16,7 +16,7 @@ import {
   ensureGillProgramIdConsistency,
   type GillBuildConfig,
 } from './build-coordinator'
-import { loadGillRecipientsFile, type GillFileConfig } from './file-manager'
+import { loadGillRecipientsFile, ensureGillCodamaSync, type GillFileConfig } from './file-manager'
 
 export interface GillInitializerConfig {
   rpcUrl?: string
@@ -152,6 +152,13 @@ export async function initializeGillAirdrop(
 
     const programAddress = address(status.programId)
     console.log(`📍 Program ID: ${programAddress} (Gill)`)
+
+    // Ensure Codama client is in sync with current program ID
+    console.log('🔄 Checking Codama client sync... (Gill)')
+    const codamaSynced = await ensureGillCodamaSync({ workingDir })
+    if (!codamaSynced) {
+      console.log('⚠️  Warning: Could not sync Codama client. Proceeding anyway... (Gill)')
+    }
 
     console.log('🔍 Verifying program exists on-chain... (Gill)')
     try {

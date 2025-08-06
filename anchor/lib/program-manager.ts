@@ -23,6 +23,9 @@ import {
   updateGillEnvironmentFile,
   loadGillRecipientsFile,
   getGillCurrentProgramId,
+  writeGillWalletFile,
+  writeGillTestWalletsFile,
+  ensureGillCodamaSync,
 } from './file-manager'
 
 import { generateGillMerkleTree } from './merkle-tree-manager'
@@ -197,6 +200,11 @@ export async function completeGillSetup(options: GillSetupOptions): Promise<{
 
     updateGillAnchorConfig(deployWallet, programId, { workingDir: config.workingDir })
     generateGillRecipientsJson(testWallets, programId, airdropAmountLamports, { workingDir: config.workingDir })
+    
+    // Write wallet files to disk
+    console.log('\n💾 Writing wallet files...')
+    writeGillWalletFile(deployWallet, { workingDir: config.workingDir })
+    writeGillTestWalletsFile(testWallets, { workingDir: config.workingDir })
 
     console.log('\n🌳 Generating merkle tree...')
     const recipientsData = loadGillRecipientsFile(undefined, { workingDir: config.workingDir })
@@ -221,6 +229,13 @@ export async function completeGillSetup(options: GillSetupOptions): Promise<{
       programId = deployResult.programId || programId
 
       updateGillEnvironmentFile(programId)
+      
+      // Ensure Codama client is updated with new program ID
+      console.log('🔄 Syncing Codama client with deployed program ID... (Gill)')
+      const codamaSynced = await ensureGillCodamaSync({ workingDir: config.workingDir })
+      if (!codamaSynced) {
+        console.log('⚠️  Warning: Could not sync Codama client after deployment (Gill)')
+      }
     }
 
     console.log('\n✅ Complete setup finished successfully with Gill!')

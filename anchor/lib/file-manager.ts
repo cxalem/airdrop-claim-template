@@ -179,6 +179,56 @@ export function loadGillRecipientsFile(filePath?: string, config: GillFileConfig
   }
 }
 
+export function writeGillWalletFile(wallet: GillWalletInfo, config: GillFileConfig = {}): void {
+  const { workingDir = 'anchor' } = config
+  
+  try {
+    const walletPath = path.join(workingDir, wallet.keypairFile)
+    const walletData = JSON.stringify(wallet.secretKey.array, null, 2)
+    
+    fs.writeFileSync(walletPath, walletData)
+    console.log(`✅ Created wallet file: ${walletPath} (Gill)`)
+  } catch (error) {
+    console.error(`❌ Error writing wallet file for ${wallet.name}:`, error)
+    throw error
+  }
+}
+
+export function writeGillTestWalletsFile(testWallets: GillWalletInfo[], config: GillFileConfig = {}): void {
+  const { workingDir = 'anchor' } = config
+  
+  try {
+    const testWalletsPath = path.join(workingDir, 'test-wallets.json')
+    const testWalletsData = {
+      wallets: testWallets.map(wallet => ({
+        name: wallet.name,
+        address: wallet.address,
+        keypairFile: wallet.keypairFile,
+        balance: wallet.balance,
+        funded: wallet.funded,
+        privateKey: wallet.privateKey,
+        secretKey: wallet.secretKey
+      })),
+      metadata: {
+        createdAt: new Date().toISOString(),
+        network: config.network || 'devnet',
+        count: testWallets.length
+      }
+    }
+    
+    fs.writeFileSync(testWalletsPath, JSON.stringify(testWalletsData, null, 2))
+    console.log(`✅ Created test wallets file: ${testWalletsPath} (Gill)`)
+    
+    // Also write individual wallet files
+    testWallets.forEach(wallet => {
+      writeGillWalletFile(wallet, config)
+    })
+  } catch (error) {
+    console.error('❌ Error writing test wallets file:', error)
+    throw error
+  }
+}
+
 export function getGillCurrentProgramId(config: GillFileConfig = {}): string {
   const { workingDir = 'anchor' } = config
 
@@ -199,5 +249,76 @@ export function getGillCurrentProgramId(config: GillFileConfig = {}): string {
   } catch (error) {
     console.error('❌ Error getting current program ID:', error)
     throw new Error(`Failed to get program ID: ${error instanceof Error ? error.message : String(error)}`)
+  }
+}
+
+export function getGillCodamaProgramId(config: GillFileConfig = {}): string | null {
+  const { workingDir = 'anchor' } = config
+
+  try {
+    const codamaClientPath = path.join(workingDir, 'generated', 'clients', 'ts', 'programs', 'solanaDistributor.ts')
+    
+    if (!fs.existsSync(codamaClientPath)) {
+      return null
+    }
+
+    const codamaContent = fs.readFileSync(codamaClientPath, 'utf8')
+    const match = codamaContent.match(/SOLANA_DISTRIBUTOR_PROGRAM_ADDRESS\s*=\s*'([^']+)'/)
+    
+    if (match) {
+      return match[1]
+    }
+
+    return null
+  } catch (error) {
+    console.error('❌ Error reading Codama program ID:', error)
+    return null
+  }
+}
+
+export async function ensureGillCodamaSync(config: GillFileConfig = {}): Promise<boolean> {
+  const { workingDir = 'anchor' } = config
+
+  try {
+    const currentProgramId = getGillCurrentProgramId(config)
+    const codamaProgramId = getGillCodamaProgramId(config)
+
+    if (codamaProgramId === currentProgramId) {
+      console.log('✅ Codama client is already in sync with current program ID (Gill)')
+      return true
+    }
+
+    console.log('🔄 Program ID mismatch detected, regenerating Codama client... (Gill)')
+    console.log(`   Current Program ID: ${currentProgramId}`)
+    console.log(`   Codama Program ID: ${codamaProgramId || 'not found'}`)
+
+    // Import and run the codama generation
+    const { execSync } = require('child_process')
+    const codamaConfigPath = path.join(workingDir, 'codama.config.ts')
+    
+    if (!fs.existsSync(codamaConfigPath)) {
+      console.error('❌ Codama config not found at:', codamaConfigPath)
+      return false
+    }
+
+    console.log('⚡ Regenerating Codama client...')
+    execSync(`npx ts-node codama.config.ts`, {
+      cwd: workingDir,
+      stdio: 'pipe'
+    })
+
+    // Verify the update was successful
+    const updatedCodamaProgramId = getGillCodamaProgramId(config)
+    if (updatedCodamaProgramId === currentProgramId) {
+      console.log('✅ Codama client successfully updated with current program ID! (Gill)')
+      return true
+    } else {
+      console.error('❌ Failed to update Codama client program ID')
+      return false
+    }
+
+  } catch (error) {
+    console.error('❌ Error syncing Codama client:', error)
+    return false
   }
 }
