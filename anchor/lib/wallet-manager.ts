@@ -26,10 +26,8 @@ export function createGillWalletClient(config: GillNetworkConfig) {
 export async function generateGillWallet(name: string): Promise<GillWalletInfo> {
   const signer = await generateKeyPairSigner()
 
-  const privateKeyBytes = crypto.getRandomValues(new Uint8Array(32))
-  const secretKeyBytes = new Uint8Array(64)
-  secretKeyBytes.set(privateKeyBytes)
-  secretKeyBytes.set(new Uint8Array(32), 32) // Set public key portion
+  const secretKeyBytes = new Uint8Array(await crypto.subtle.exportKey('raw', signer.keyPair.privateKey))
+  const privateKeyBytes = secretKeyBytes.slice(0, 32)
 
   return {
     name,
