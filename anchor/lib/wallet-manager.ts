@@ -1,4 +1,6 @@
 import bs58 from 'bs58'
+import { generateKeyPair } from 'crypto'
+import { promisify } from 'util'
 import type { GillWalletInfo, GillNetworkConfig } from './types'
 import {
   createSolanaRpc,
@@ -9,6 +11,8 @@ import {
   type Rpc,
   type SolanaRpcApi,
 } from 'gill'
+
+const generateKeyPairAsync = promisify(generateKeyPair)
 
 export function createGillWalletClient(config: GillNetworkConfig) {
   const networkUrls = {
@@ -24,10 +28,20 @@ export function createGillWalletClient(config: GillNetworkConfig) {
 }
 
 export async function generateGillWallet(name: string): Promise<GillWalletInfo> {
-  const signer = await generateKeyPairSigner()
+  const { privateKey, publicKey } = await generateKeyPairAsync('ed25519', {
+    privateKeyEncoding: { type: 'pkcs8', format: 'der' },
+    publicKeyEncoding: { type: 'spki', format: 'der' },
+  })
 
-  const secretKeyBytes = new Uint8Array(await crypto.subtle.exportKey('raw', signer.keyPair.privateKey))
-  const privateKeyBytes = secretKeyBytes.slice(0, 32)
+  const privateKeyBytes = privateKey.slice(-32)
+
+  const publicKeyBytes = publicKey.slice(-32)
+
+  const secretKeyBytes = new Uint8Array(64)
+  secretKeyBytes.set(privateKeyBytes, 0)
+  secretKeyBytes.set(publicKeyBytes, 32)
+
+  const signer = await createKeyPairSignerFromBytes(secretKeyBytes)
 
   return {
     name,

@@ -21,6 +21,7 @@ import {
   generateGillRecipientsJson,
   updateGillRecipientsWithMerkleRoot,
   updateGillEnvironmentFile,
+  updateGillFrontendRecipientsFile,
   loadGillRecipientsFile,
   getGillCurrentProgramId,
   writeGillWalletFile,
@@ -210,6 +211,10 @@ export async function completeGillSetup(options: GillSetupOptions): Promise<{
     const recipientsData = loadGillRecipientsFile(undefined, { workingDir: config.workingDir })
     const { merkleRoot } = generateGillMerkleTree(recipientsData)
     updateGillRecipientsWithMerkleRoot(merkleRoot, { workingDir: config.workingDir })
+    
+    updateGillFrontendRecipientsFile({ workingDir: config.workingDir })
+    
+    updateGillEnvironmentFile(programId, testWallets, { workingDir: config.workingDir })
 
     if (deployProgram) {
       console.log('\n🚀 Deploying program with Gill...')
@@ -228,7 +233,7 @@ export async function completeGillSetup(options: GillSetupOptions): Promise<{
 
       programId = deployResult.programId || programId
 
-      updateGillEnvironmentFile(programId)
+      updateGillEnvironmentFile(programId, testWallets, { workingDir: config.workingDir })
       
       // Ensure Codama client is updated with new program ID
       console.log('🔄 Syncing Codama client with deployed program ID... (Gill)')
