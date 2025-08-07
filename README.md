@@ -95,8 +95,8 @@ Create or update `.env.local`:
 # Program ID (automatically set by setup script)
 NEXT_PUBLIC_PROGRAM_ID=your_deployed_program_id_here
 
-# Your private key (get this from anchor/test-wallets.json)
-NEXT_PUBLIC_USER_PRIVATE_KEY=your_base58_private_key_here
+# Your private key (get this from anchor/test-wallets.json) - server-side only
+USER_PRIVATE_KEY=your_base58_private_key_here
 
 # Network (optional, defaults to devnet)
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
