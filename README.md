@@ -14,7 +14,7 @@ A complete Next.js template for creating and claiming Solana airdrops using Merk
 
 ## 📋 Prerequisites
 
-- **Node.js 18+** and **pnpm** (or npm/yarn)
+- **Node.js 22+** and **pnpm** (or npm/yarn)
 - **Solana CLI tools** installed and configured
 - **Anchor Framework** (version 0.31.1+)
 - **Rust** (for compiling Solana programs)
