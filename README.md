@@ -23,8 +23,8 @@ A complete Next.js template for creating and claiming Solana airdrops using Merk
 ### Installing Prerequisites
 
 ```bash
-# Install Solana CLI
-sh -c "$(curl -sSfL https://release.solana.com/v1.18.4/install)"
+# Install Solana CLI (Mac and Linux)
+curl --proto '=https' --tlsv1.2 -sSfL https://solana-install.solana.workers.dev | bash
 
 # Install Anchor
 npm install -g @coral-xyz/anchor-cli
