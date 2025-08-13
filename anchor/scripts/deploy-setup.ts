@@ -7,7 +7,7 @@ import {
   generateGillWallet,
   createGillWalletFromKey,
   ensureGillWalletFunded,
-  generateGillTestWallets,
+  generateGillTestWallets
 } from "../lib/wallet-manager";
 import {
   completeGillSetup,
@@ -144,7 +144,6 @@ export async function runGillDeploymentSetup(config: GillDeploymentSetupConfig =
       process.exit(1);
     }
 
-    // Step 4: Show final summary
     showGillFinalSummary(result, shouldDeploy);
 
   } catch (error) {

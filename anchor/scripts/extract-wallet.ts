@@ -3,7 +3,7 @@
 import { 
   createGillWalletClient,
 } from "../lib/wallet-manager";
-import { address } from '@solana/kit';
+import { address } from 'gill';
 import * as fs from 'fs';
 import type { TestWalletsData } from '../lib/types';
 
@@ -35,9 +35,6 @@ export function extractWallet(walletName: string, outputPath?: string): boolean 
   }
 }
 
-/**
- * Load wallets from test-wallets.json
- */
 function loadWallets(): { deployWallet: any | null, testWallets: any[] } {
   try {
     if (!fs.existsSync("test-wallets.json")) {
@@ -57,9 +54,6 @@ function loadWallets(): { deployWallet: any | null, testWallets: any[] } {
   }
 }
 
-/**
- * Extract all wallets from test-wallets.json to individual files
- */
 export function extractAllWallets(): boolean {
   try {
     const { deployWallet, testWallets } = loadWallets();
@@ -91,9 +85,6 @@ export function extractAllWallets(): boolean {
   }
 }
 
-/**
- * List all available wallets in test-wallets.json
- */
 export function listWallets(): void {
   try {
     const { deployWallet, testWallets } = loadWallets();
@@ -118,7 +109,6 @@ export function listWallets(): void {
   }
 }
 
-// Script execution
 async function main() {
   const args = process.argv.slice(2);
   
@@ -156,9 +146,6 @@ async function main() {
   }
 }
 
-/**
- * List all available wallets using Gill (modern approach)
- */
 export async function listGillWallets(): Promise<void> {
   try {
     const { deployWallet, testWallets } = loadWallets();
@@ -172,7 +159,6 @@ export async function listGillWallets(): Promise<void> {
     
     console.log(`📋 Available wallets (${allWallets.length}) - Gill version:`);
     
-    // Create Gill RPC client for balance checking
     const client = createGillWalletClient({ network: 'devnet' });
     
     for (let i = 0; i < allWallets.length; i++) {
@@ -198,7 +184,6 @@ export async function listGillWallets(): Promise<void> {
   }
 }
 
-// Run if this file is executed directly
 if (require.main === module) {
   if (process.argv.includes('--list')) {
     // Use Gill version for listing
